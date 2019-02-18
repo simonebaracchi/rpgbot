@@ -1,0 +1,13 @@
+[Unit]
+Description=RPG Bot daemon
+After=network.target
+
+[Service]
+WorkingDirectory=MY-PATH
+ExecStart=MY-PATH/main.py
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
