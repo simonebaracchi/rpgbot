@@ -3,13 +3,13 @@ RPG helper bot for Telegram
 
 Commands:
 
-  - /newgame
+  - /newgame `<name>`
   - /delgame
   - /showgame
   - /roll
-  - /player
-  - /update
-  - /add
-  - /del
+  - /player `<name>`
+  - /update `<container>` `<item>` `<value>`
+  - /add `<container>` `<item>` `<change>`
+  - /del `<container>` `<item>`
   - /show
 
