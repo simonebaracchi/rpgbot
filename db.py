@@ -4,6 +4,7 @@ db_name = 'games.db'
 db_version = 1
 ROLE_PLAYER = 10
 ROLE_MASTER = 20
+game_templates = ['fae']
 
 def open_connection():
     return sqlite3.connect(db_name)
@@ -25,7 +26,7 @@ def init():
         print('Initializing database...')
         c = db.cursor()
         if not table_exists(db, 'Games'):
-            c.execute('''CREATE TABLE IF NOT EXISTS Games (gameid integer primary key autoincrement, version int, lastactivity datetime, gamename text)''')
+            c.execute('''CREATE TABLE IF NOT EXISTS Games (gameid integer primary key autoincrement, version int, lastactivity datetime, gamename text, template text)''')
         if not table_exists(db, 'Groups'):
             c.execute('''CREATE TABLE IF NOT EXISTS Groups (gameid integer, groupid integer primary key, groupname text)''')
         if not table_exists(db, 'Players'):
@@ -38,9 +39,11 @@ def init():
     db.commit()
     close_connection(db)
 
-def new_game(db, admin, playername, gamename, groupid, groupname):
+def new_game(db, admin, playername, gamename, groupid, groupname, template):
+    if template not in game_templates:
+        raise
     c = db.cursor()
-    query = c.execute('''INSERT INTO Games(version, lastactivity, gamename) VALUES (?, datetime('now'), ?)''', (db_version, gamename,))
+    query = c.execute('''INSERT INTO Games(version, lastactivity, gamename, template) VALUES (?, datetime('now'), ?, ?)''', (db_version, gamename, template))
     gameid = c.lastrowid
     query = c.execute('''INSERT INTO Groups(gameid, groupid, groupname) VALUES (?, ?, ?)''', (gameid, groupid, groupname,))
     add_player(db, admin, playername, gameid, ROLE_MASTER)
@@ -53,16 +56,56 @@ def del_game(db, gameid):
     query = c.execute('''DELETE FROM Players WHERE gameid=?''', (gameid,))
     query = c.execute('''DELETE FROM Contents WHERE gameid=?''', (gameid,))
     db.commit()
+
+def get_template_from_gameid(db, gameid):
+    c = db.cursor()
+    query = c.execute('''SELECT template FROM Games WHERE gameid=?''', (gameid,))
+    result = query.fetchone()
+    if result == None:
+        # invalid gameid or database not updated
+        raise
+    template = result[0]
+    return template
+
+def get_template_from_groupid(db, groupid):
+    c = db.cursor()
+    query = c.execute('''SELECT template FROM Games LEFT JOIN Groups ON Games.gameid = Groups.gameid WHERE groupid=?''', (groupid,))
+    result = query.fetchone()
+    if result == None:
+        # group not in a game
+        return None
+    template = result[0]
+    return template
     
 def add_player(db, userid, username, gameid, role):
     c = db.cursor()
     query = c.execute('''SELECT role FROM Players WHERE playerid=? AND gameid=?''', (userid, gameid,))
     result = query.fetchone()
-    if result is not None and result[0] >= role:
-        role = result[0]
+
+    new_player_added = False
+    if result is None:
+        new_player_added = True
+    else:
+        if result[0] >= role:
+            role = result[0]
 
     query = c.execute('''INSERT OR REPLACE INTO Players(gameid, playerid, role, playername) VALUES (?, ?, ?, ?)''', (gameid, userid, role, username,))
     db.commit()
+    return new_player_added
+
+
+def add_default_items(db, userid, gameid, template):
+    if template == 'fae':
+        update_item(db, gameid, userid, 'gen', 'highconcept', 'Set this to your high concept.', False)
+        update_item(db, gameid, userid, 'gen', 'description', 'Describe your character in a few words.', False)
+        update_item(db, gameid, userid, 'gen', 'fatepoints', '2', False)
+        update_item(db, gameid, userid, 'gen', 'stress2', 'Inactive', False)
+        update_item(db, gameid, userid, 'gen', 'stress4', 'Inactive', False)
+        update_item(db, gameid, userid, 'gen', 'stress6', 'Inactive', False)
+        update_item(db, gameid, userid, 'aspects', '1', 'Set this to your first aspect.', False)
+        update_item(db, gameid, userid, 'aspects', '2', 'Set this to your second aspect.', False)
+        update_item(db, gameid, userid, 'stunts', '1', 'Set this to your first stunt.', False)
+        
 
 def number_of_games(db, user):
     c = db.cursor()
