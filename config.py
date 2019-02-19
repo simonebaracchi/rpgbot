@@ -10,3 +10,5 @@ admins = admins.split(',')
 bot_token = os.environ.get('RPGBOT_TOKEN')
 if bot_token is None:
     raise Exception('No Token Provided')
+
+sqlite_path = os.environ.get('RPGBOT_SQLITE_PATH', '/data/games.db' )

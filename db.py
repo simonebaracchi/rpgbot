@@ -1,6 +1,7 @@
 import sqlite3
+import config
 
-db_name = 'games.db'
+db_name = config.sqlite_path
 db_version = 1
 ROLE_PLAYER = 10
 ROLE_MASTER = 20
@@ -53,7 +54,7 @@ def del_game(db, gameid):
     query = c.execute('''DELETE FROM Players WHERE gameid=?''', (gameid,))
     query = c.execute('''DELETE FROM Contents WHERE gameid=?''', (gameid,))
     db.commit()
-    
+
 def add_player(db, userid, username, gameid, role):
     c = db.cursor()
     query = c.execute('''SELECT role FROM Players WHERE playerid=? AND gameid=?''', (userid, gameid,))
@@ -96,7 +97,7 @@ def number_of_items(db, gameid, playerid):
     query = c.execute('''SELECT count(*) FROM Contents WHERE gameid=? AND playerid=?''', (gameid, playerid,))
     result = query.fetchone()
     return result[0]
-    
+
 def update_item(db, gameid, playerid, container, key, change, relative):
     c = db.cursor()
     query = c.execute('''SELECT value FROM Contents WHERE gameid=? AND playerid=? AND container=? AND key=?''', (gameid, playerid, container, key,))
