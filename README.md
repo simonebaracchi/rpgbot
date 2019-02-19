@@ -20,14 +20,12 @@ Commands:
 Build docker container:
 
 ```
- docker build . -t rpgbot 
+ docker build . -t rpgbot
 ```
 
 
 Run container:
 
 ```
- docker run -ti -e RPGBOT_TOKEN=Your:Token -e RPGBOT_ADMINS=my-id,another-id rpgbot
+ docker run -t -v /your-preferred-path/data:/data -e RPGBOT_TOKEN=Your:Token -e RPGBOT_ADMINS=my-id,another-id rpgbot
 ```
-
-
