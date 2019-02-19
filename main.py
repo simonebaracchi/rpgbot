@@ -59,10 +59,13 @@ def process_message(msg):
 
     msg -- The received message
     """
+    if 'text' not in msg:
+        # probably a sticker or something
+        return
+    text = msg['text']
     chat_id = msg['chat']['id']
     sender_id = msg['from']['id']
     username = msg['from']['username']
-    text = msg['text']
     is_group = msg['chat']['type'] == 'group'
     groupname = msg['chat']['title'] if 'title' in msg['chat'] else None
 
