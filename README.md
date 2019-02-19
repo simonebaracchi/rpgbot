@@ -1,3 +1,4 @@
+
 # rpgbot
 RPG helper bot for Telegram
 
@@ -12,4 +13,21 @@ Commands:
   - /add `<container>` `<item>` `<change>`
   - /del `<container>` `<item>`
   - /show
+
+
+## Run in docker
+
+Build docker container:
+
+```
+ docker build . -t rpgbot 
+```
+
+
+Run container:
+
+```
+ docker run -ti -e RPGBOT_TOKEN=Your:Token -e RPGBOT_ADMINS=my-id,another-id rpgbot
+```
+
 

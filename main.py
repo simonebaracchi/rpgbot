@@ -14,6 +14,9 @@ import random
 import config
 import db
 
+
+
+
 log_file = 'service.log'
 
 
@@ -47,7 +50,7 @@ def log_msg(msg):
     else:
         chat_name = username
     log('{}: {}'.format(chat_name, text))
-    
+
 def send(bot, chat_id, msg):
     if msg == None or len(msg) == 0 or len(msg.split()) == 0:
         msg = '(no message)'
@@ -159,7 +162,7 @@ def process_message(msg):
         else:
             relative = True
         oldvalue, newvalue = db.update_item(dbc, gameid, sender_id, container, key, int(change), relative=relative)
-        send(bot, chat_id, 'Updated {}/{} from {} to {} (changed {}).'.format(container, key, 
+        send(bot, chat_id, 'Updated {}/{} from {} to {} (changed {}).'.format(container, key,
              oldvalue, newvalue, newvalue-oldvalue))
     if command == '/del':
         if not is_group:
