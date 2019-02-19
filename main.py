@@ -62,10 +62,13 @@ def process_message(msg):
 
     msg -- The received message
     """
+    if 'text' not in msg:
+        # probably a sticker or something
+        return
+    text = msg['text']
     chat_id = msg['chat']['id']
     sender_id = msg['from']['id']
     username = msg['from']['username']
-    text = msg['text']
     is_group = msg['chat']['type'] == 'group'
     groupname = msg['chat']['title'] if 'title' in msg['chat'] else None
 
@@ -91,7 +94,7 @@ def process_message(msg):
         if db.number_of_games(dbc, sender_id) > 10:
             send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
             return
-        db.new_game(dbc, sender_id, username, args[1], chat_id, groupname)
+        db.new_game(dbc, sender_id, username, args[1], chat_id, groupname, 'fae')
         send(bot, chat_id, 'New game created: {}.'.format(args[1]))
     if command == '/delgame':
         if not is_group:
@@ -117,6 +120,13 @@ def process_message(msg):
         send(bot, chat_id, ret)
 
     if command == '/roll':
+        template = db.get_template_from_groupid(dbc, chat_id)
+        if template == 'fae':
+            dice = '4dF'
+        else:
+            # more templates here
+            # just a placeholder for custom dices
+            dice = '1d20'
         ret = 0
         string = ''
         for i in range(0, 4):
@@ -141,8 +151,13 @@ def process_message(msg):
             send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
             return
         gameid = db.get_game_from_group(dbc, chat_id)
-        db.add_player(dbc, sender_id, args[1], gameid, db.ROLE_PLAYER)
-        send(bot, chat_id, 'Welcome, {}.'.format(args[1]))
+        new_player_added = db.add_player(dbc, sender_id, args[1], gameid, db.ROLE_PLAYER)
+        if new_player_added:
+            template = db.get_template_from_gameid(dbc, gameid)
+            db.add_default_items(dbc, sender_id, gameid, template)
+            send(bot, chat_id, 'Welcome, {}.'.format(args[1]))
+        else:
+            send(bot, chat_id, 'You will now be known as {}.'.format(args[1]))
 
     if command == '/update' or command == '/add':
         if not is_group:
