@@ -171,7 +171,7 @@ def get_items(db, gameid, playerid):
     ret = {}
     c = db.cursor()
     query = c.execute('''SELECT DISTINCT container FROM Contents WHERE gameid=? AND playerid=?''', (gameid, playerid,))
-    for container in query:
+    for container in query.fetchall():
         inner = c.execute('''SELECT key, value FROM Contents WHERE gameid=? AND playerid=? AND container=?''', (gameid, playerid, container[0]))
         my_list = {}
         for item in inner:
