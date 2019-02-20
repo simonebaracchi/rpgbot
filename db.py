@@ -77,18 +77,26 @@ def get_template_from_groupid(db, groupid):
     template = result[0]
     return template
     
-def add_player(db, userid, username, gameid, role):
+def get_player_role(db, userid, gameid):
     c = db.cursor()
     query = c.execute('''SELECT role FROM Players WHERE playerid=? AND gameid=?''', (userid, gameid,))
     result = query.fetchone()
+    if result is None:
+        return None
+    role = result[0]
+    return role
+
+def add_player(db, userid, username, gameid, role):
+    old_role = get_player_role(db, userid, gameid)
 
     new_player_added = False
-    if result is None:
+    if old_role is None:
         new_player_added = True
     else:
-        if result[0] >= role:
-            role = result[0]
+        if old_role >= role:
+            role = old_role
 
+    c = db.cursor()
     query = c.execute('''INSERT OR REPLACE INTO Players(gameid, playerid, role, playername) VALUES (?, ?, ?, ?)''', (gameid, userid, role, username,))
     db.commit()
     return new_player_added

@@ -97,13 +97,13 @@ def process_message(msg):
         if not is_group:
             send(bot, chat_id, 'You must run this command in a group.')
             return
-        # TODO
-        if not is_admin:
-            send(bot, chat_id, 'You need to be the administrator to close a game.')
-            return
         gameid = db.get_game_from_group(dbc, chat_id)
         if gameid is None:
             send(bot, chat_id, 'No game found.')
+            return
+        role = db.get_player_role(dbc, sender_id, gameid)
+        if role != db.ROLE_MASTER:
+            send(bot, chat_id, 'You need to be a game master to close a game.')
             return
         db.del_game(dbc, gameid)
         send(bot, chat_id, 'GG, humans.')
