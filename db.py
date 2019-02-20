@@ -48,6 +48,7 @@ def new_game(db, admin, playername, gamename, groupid, groupname, template):
     query = c.execute('''INSERT INTO Groups(gameid, groupid, groupname) VALUES (?, ?, ?)''', (gameid, groupid, groupname,))
     add_player(db, admin, playername, gameid, ROLE_MASTER)
     db.commit()
+    return gameid
 
 def del_game(db, gameid):
     c = db.cursor()

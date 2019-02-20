@@ -91,7 +91,8 @@ def process_message(msg):
         if db.number_of_games(dbc, sender_id) > 10:
             send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
             return
-        db.new_game(dbc, sender_id, username, args[1], chat_id, groupname, 'fae')
+        gameid = db.new_game(dbc, sender_id, username, args[1], chat_id, groupname, 'fae')
+        db.add_default_items(dbc, sender_id, gameid, 'fae')
         send(bot, chat_id, 'New game created: {}.'.format(args[1]))
     if command == '/delgame':
         if not is_group:
