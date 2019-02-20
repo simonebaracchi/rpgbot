@@ -114,7 +114,8 @@ def process_message(msg):
             return
         gameid = db.get_game_from_group(dbc, chat_id)
         gamename, groups, players = db.get_game_info(dbc, gameid)
-        ret = '{}\nGroups: {}\nPlayers: {}'.format(gamename, ', '.join(groups), ', '.join(players))
+        players_string = [x + (' (gm)' if (y == db.ROLE_MASTER) else '') for x,y in players.items()]
+        ret = '{}\nGroups: {}\nPlayers: {}'.format(gamename, ', '.join(groups), ', '.join(players_string))
         send(bot, chat_id, ret)
 
     if command == '/roll':

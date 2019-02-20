@@ -139,10 +139,10 @@ def get_game_info(db, gameid):
     groups = []
     for group in query:
         groups.append(group[0])
-    query = c.execute('''SELECT playername FROM Players WHERE gameid=?''', (gameid,))
-    players = []
+    query = c.execute('''SELECT playername, role FROM Players WHERE gameid=?''', (gameid,))
+    players = {}
     for player in query:
-        players.append(player[0])
+        players[player[0]] = player[1]
     return gamename, groups, players
 
 def number_of_items(db, gameid, playerid):
