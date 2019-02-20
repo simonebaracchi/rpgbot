@@ -151,18 +151,36 @@ def number_of_items(db, gameid, playerid):
     result = query.fetchone()
     return result[0]
     
-def update_item(db, gameid, playerid, container, key, change, relative):
+def update_item(db, gameid, playerid, container, key, change, replace_only):
+    """
+    change: can be a string, a number, or a relative change (e.g. '+1', '-1')
+    replace_only: will avoid adding a new key
+
+    Returns:
+    oldvalue: None if didn't exist, int if it was digits, or a string
+    newvalue: int if oldvalue was digits and change is a relative change, text otherwise
+    """
     c = db.cursor()
     query = c.execute('''SELECT value FROM Contents WHERE gameid=? AND playerid=? AND container=? AND key=?''', (gameid, playerid, container, key,))
     result = query.fetchone()
     if result is None:
-        oldvalue = 0
+        oldvalue = None
+        if replace_only:
+            return oldvalue, None
     else:
-        oldvalue = int(result[0])
-    if relative:
-        newvalue = oldvalue + change
+        oldvalue = result[0]
+
+    if oldvalue is not None and oldvalue.isdigit() and change.isdigit() or (change[0] in ['+', '-'] and change[1:].isdigit()):
+        oldvalue = int(oldvalue)
+        if change[0] == '+':
+            newvalue = oldvalue + int(change[1:])
+        elif change[0] == '-':
+            newvalue = oldvalue - int(change[1:])
+        else:
+            newvalue = int(change)
     else:
         newvalue = change
+
     query = c.execute('''INSERT OR REPLACE INTO Contents(gameid, playerid, container, key, value) VALUES (?, ?, ?, ?, ?)''', (gameid, playerid, container, key, newvalue,))
     db.commit()
     return oldvalue, newvalue

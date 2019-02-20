@@ -163,21 +163,26 @@ def process_message(msg):
             send(bot, chat_id, 'You must run this command in a group.')
             return
         gameid = db.get_game_from_group(dbc, chat_id)
-        if db.number_of_items(dbc, gameid, sender_id) > 50:
+        if command == '/add' and db.number_of_items(dbc, gameid, sender_id) > 50:
             send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
             return
-        args = args[1].split()
+        args = args[1].split(maxsplit=2)
         if len(args) != 3:
             send(bot, chat_id, 'Use the format: [container] [key] [change].')
             return
         (container, key, change) = args
         if command == '/update':
-            relative = False
+            replace_only = True
         else:
-            relative = True
-        oldvalue, newvalue = db.update_item(dbc, gameid, sender_id, container, key, int(change), relative=relative)
-        send(bot, chat_id, 'Updated {}/{} from {} to {} (changed {}).'.format(container, key, 
-             oldvalue, newvalue, newvalue-oldvalue))
+            replace_only = False
+        oldvalue, newvalue = db.update_item(dbc, gameid, sender_id, container, key, change, replace_only)
+        if newvalue is None:
+            send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
+        elif isinstance(oldvalue, int) and isinstance(newvalue, int):
+            send(bot, chat_id, 'Updated {}/{} from {} to {} (changed {}).'.format(container, key, 
+                 oldvalue, newvalue, newvalue-oldvalue))
+        else:
+            send(bot, chat_id, 'Updated {}/{} to "{}".'.format(container, key, newvalue))
     if command == '/del':
         if not is_group:
             send(bot, chat_id, 'You must run this command in a group.')
@@ -190,7 +195,7 @@ def process_message(msg):
         (container, key) = args
         oldvalue = db.delete_item(dbc, gameid, sender_id, container, key)
         if oldvalue == None:
-            send(bot, chat_id, 'No item by that name.')
+            send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
         else:
             send(bot, chat_id, 'Deleted {}/{} (was {}).'.format(container, key, oldvalue))
 
