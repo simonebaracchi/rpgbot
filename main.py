@@ -9,10 +9,10 @@ import os
 import re
 import sys
 import json
-import random
 
 import config
 import db
+import diceroller
 
 log_file = 'service.log'
 
@@ -119,41 +119,28 @@ def process_message(msg):
         send(bot, chat_id, ret)
 
     if command == '/roll':
-        ret = 0
-        string = ''
-        m = None
-        if len(args) >= 2:
-            m = re.search('([0-9]+)d([0-9]+)', args[1])
-        if m is not None:
-            dices = int(m.group(1))
-            sides = int(m.group(2))
-            if dices > 50 or sides > 10000:
-                send(bot, chat_id, 'Sorry, try with less dices.')
-                return
-            lista = []
-            for x in range(0, dices):
-                value = random.randint(1, sides);
-                ret += value
-                lista.append(str(value))
-            string = '+'.join(lista)
-        else:
+        if len(args) < 2:
             template = db.get_template_from_groupid(dbc, chat_id)
             if template == 'fae':
                 dice = '4dF'
             else:
                 # more templates here
-                # just a placeholder for custom dices
                 dice = '1d20'
-            for i in range(0, 4):
-                value = random.randint(-1, 1)
-                ret += value;
-                if value == -1:
-                    string += '➖'
-                if value == 0:
-                    string += '〇'
-                if value == 1:
-                    string += '➕'
-        send(bot, chat_id, 'Rolled {} = {}.'.format(string, ret))
+        else:
+            dice = args[1].strip()
+
+        value = 0
+        description = ''
+        try:
+            value, description = diceroller.roll(dice)
+        except (diceroller.InvalidFormat):
+            send(bot, chat_id, 'Invalid dice format.')
+            return
+        except (diceroller.TooManyDices):
+            send(bot, chat_id, 'Sorry, try with less dices.')
+            return
+
+        send(bot, chat_id, 'Rolled {} = {}.'.format(description, value))
 
     if command == '/player':
         if not is_group:
