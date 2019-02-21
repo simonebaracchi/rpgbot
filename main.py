@@ -234,6 +234,19 @@ def process_message(msg):
                 ret += '  - {} ({})\n'.format(key, items[container][key])
         send(bot, chat_id, ret)
 
+    if command == '/start':
+        if is_group:
+            return
+        ret = """Howdy, human.
+I am a character sheet bot for Fate RPG.
+To use my services, add me to a group, then start a new game with `/newgame <game name>`.
+Other players can join with `/player <character name>`.
+You can check your character with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
+This is only a quick starter guide. For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot.
+
+Hope you have fun!"""
+        send(bot, chat_id, ret)
+
     db.close_connection(dbc)
 
 db.init()
