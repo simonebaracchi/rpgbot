@@ -29,7 +29,7 @@ N|n)
 	exit 0
 	;;
 Y|y)
-	cp systemctl/rpgbot.example.service /tmp/rpgbot.service
+	cp rpgbot.systemd-example.service /tmp/rpgbot.service
 	DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 	sed -i s"#MY-PATH#$DIR#" /tmp/rpgbot.service
 	mv /tmp/rpgbot.service /etc/systemd/system/multi-user.target.wants/rpgbot.service
