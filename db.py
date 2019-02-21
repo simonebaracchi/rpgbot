@@ -102,8 +102,8 @@ def add_player(db, userid, username, gameid, role):
     db.commit()
     return new_player_added
 
-preferred_show_order = {'gen': ['highconcept', 'description', 'fatepoints', 'stress2', 'stress4', 'stress6'], 
-    'aspects': [], 'stunts': [], 'skills': [], 'spells': [], 'inventory': [], 'rolls': []}
+preferred_container_order = ['gen', 'aspects', 'stunts', 'skills', 'spells', 'inventory', 'rolls']
+preferred_key_order = {'gen': ['highconcept', 'description', 'fatepoints', 'stress2', 'stress4', 'stress6']}
 
 def add_default_items(db, userid, gameid, template):
     if template == 'fae':

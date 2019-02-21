@@ -212,9 +212,13 @@ def process_message(msg):
         if items is None:
             send(bot, chat_id, 'No items found.')
             return
-        for container, keys in db.preferred_show_order.items():
+        for container in db.preferred_container_order:
             if container not in items:
                 continue
+            if container in db.preferred_key_order:
+                keys = db.preferred_key_order[container]
+            else:
+                keys = []
             ret += container + ':\n'
             # print keys in preferred order
             for key in keys:
@@ -223,7 +227,7 @@ def process_message(msg):
                 ret += '  - {} ({})\n'.format(key, items[container][key])
                 del items[container][key]
             # print remaining keys
-            for key in items[container]:
+            for key in sorted(items[container]):
                 ret += '  - {} ({})\n'.format(key, items[container][key])
             del items[container]
             
