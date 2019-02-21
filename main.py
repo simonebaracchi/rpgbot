@@ -186,6 +186,21 @@ def process_message(msg):
                  oldvalue, newvalue, newvalue-oldvalue))
         else:
             send(bot, chat_id, 'Updated {}/{} to "{}".'.format(container, key, newvalue))
+    if command == '/addlist':
+        if not is_group:
+            send(bot, chat_id, 'You must run this command in a group.')
+            return
+        gameid = db.get_game_from_group(dbc, chat_id)
+        if db.number_of_items(dbc, gameid, sender_id) > 50:
+            send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
+            return
+        args = args[1].split(maxsplit=1)
+        if len(args) != 2:
+            send(bot, chat_id, 'Use the format: [container] [description].')
+            return
+        (container, description) = args
+        db.add_to_list(dbc, gameid, sender_id, container, description)
+        send(bot, chat_id, 'Added to container {}.'.format(container))
     if command == '/del':
         if not is_group:
             send(bot, chat_id, 'You must run this command in a group.')

@@ -185,6 +185,30 @@ def update_item(db, gameid, playerid, container, key, change, replace_only):
     db.commit()
     return oldvalue, newvalue
 
+def to_number(thing):
+    """
+    Converts something to an integer.
+    Returns the integer upon success, or 0 upon failure.
+    """
+    try:
+        test = int(thing)
+        return test
+    except:
+        return 0
+
+def add_to_list(db, gameid, playerid, container, description):
+    """
+    description: the new item description
+    """
+    c = db.cursor()
+    query = c.execute('''SELECT key FROM Contents WHERE gameid=? AND playerid=? AND container=?''', (gameid, playerid, container,))
+    maximum = 0
+    for keys in query:
+        maximum = max(to_number(keys[0]), maximum)
+    new = maximum + 1
+    query = c.execute('''INSERT OR REPLACE INTO Contents(gameid, playerid, container, key, value) VALUES (?, ?, ?, ?, ?)''', (gameid, playerid, container, new, description,))
+    db.commit()
+
 def delete_item(db, gameid, playerid, container, key):
     c = db.cursor()
     query = c.execute('''SELECT value FROM Contents WHERE gameid=? AND playerid=? AND container=? AND key=?''', (gameid, playerid, container, key,))
