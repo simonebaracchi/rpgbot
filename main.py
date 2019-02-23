@@ -53,6 +53,21 @@ def send(bot, chat_id, msg):
         msg = '(no message)'
     bot.sendMessage(chat_id, msg)
 
+def newgame_already_started_usage():
+    return """This game was already started in this group.
+Now invite some players, make them join with `/player <character name>`, check your characters with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
+For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot."""
+
+def start_in_private_msg_usage():
+    return """Howdy, human.
+I am a character sheet bot for Fate RPG.
+To use my services, add me to a group, then start a new game with `/newgame <game name>`.
+Other players can join with `/player <character name>`.
+You can check your character with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
+This is only a quick starter guide. For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot.
+
+Hope you have fun!"""
+
 def process_message(msg):
     """
     Process received messages.
@@ -86,12 +101,20 @@ def process_message(msg):
             send(bot, chat_id, 'You must run this command in a group.')
             return
         if len(args) < 2:
-            send(bot, chat_id, 'Please specify the game name.')
+            send(bot, chat_id, 'Please specify the game name like this: `/newgame <name>`.')
             return
         if db.number_of_games(dbc, sender_id) > 10:
             send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
             return
+        gameid = db.get_game_from_group(dbc, chat_id)
+        if gameid is not None:
+            send(bot, chat_id, newgame_already_started_usage())
+            return
         gameid = db.new_game(dbc, sender_id, username, args[1], chat_id, groupname, 'fae')
+        if gameid is None:
+            send(bot, chat_id, newgame_already_started_usage())
+            return
+
         db.add_default_items(dbc, sender_id, gameid, 'fae')
         send(bot, chat_id, 'New game created: {}.'.format(args[1]))
     if command == '/delgame':
@@ -304,15 +327,7 @@ def process_message(msg):
     if command == '/start':
         if is_group:
             return
-        ret = """Howdy, human.
-I am a character sheet bot for Fate RPG.
-To use my services, add me to a group, then start a new game with `/newgame <game name>`.
-Other players can join with `/player <character name>`.
-You can check your character with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
-This is only a quick starter guide. For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot.
-
-Hope you have fun!"""
-        send(bot, chat_id, ret)
+        send(bot, chat_id, start_in_private_msg_usage())
 
     db.close_connection(dbc)
 

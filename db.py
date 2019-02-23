@@ -42,12 +42,26 @@ def init():
     close_connection(db)
 
 def new_game(db, admin, playername, gamename, groupid, groupname, template):
+    """
+    Creates a new game.
+    DOES NOT CHECK that the group is not already in a game.
+    Returns:
+    None - the group is already in a game.
+    the gameid otherwise.
+    """
     if template not in game_templates:
         raise
     c = db.cursor()
-    query = c.execute('''INSERT INTO Games(version, lastactivity, gamename, template) VALUES (?, datetime('now'), ?, ?)''', (db_version, gamename, template))
+    try:
+        query = c.execute('''INSERT INTO Games(version, lastactivity, gamename, template) VALUES (?, datetime('now'), ?, ?)''', (db_version, gamename, template))
+    except sqlite3.IntegrityError:
+        # probably group is already in game
+        return None
     gameid = c.lastrowid
-    query = c.execute('''INSERT INTO Groups(gameid, groupid, groupname) VALUES (?, ?, ?)''', (gameid, groupid, groupname,))
+    try:
+        query = c.execute('''INSERT INTO Groups(gameid, groupid, groupname) VALUES (?, ?, ?)''', (gameid, groupid, groupname,))
+    except sqlite3.IntegrityError:
+        return None
     add_player(db, admin, playername, gameid, ROLE_MASTER)
     db.commit()
     return gameid
