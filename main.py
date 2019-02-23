@@ -116,6 +116,12 @@ def process_message(msg):
         gamename, groups, players = db.get_game_info(dbc, gameid)
         players_string = [x + (' (gm)' if (y == db.ROLE_MASTER) else '') for x,y in players.items()]
         ret = '{}\nGroups: {}\nPlayers: {}'.format(gamename, ', '.join(groups), ', '.join(players_string))
+
+        items = db.get_items(dbc, gameid, chat_id)
+        if db.room_container in items:
+            room_items = ['  - {}: {}\n'.format(key, items[db.room_container][key]) for key in sorted(items[db.room_container])]
+            if len(room_items) > 0:
+                ret += '\nRoom aspects:\n{}'.format('\n'.join(room_items))
         send(bot, chat_id, ret)
 
     if command == '/roll':
@@ -174,11 +180,14 @@ def process_message(msg):
             send(bot, chat_id, 'Use the format: [container] [key] [change].')
             return
         (container, key, change) = args
+        owner = sender_id
+        if container == db.room_container:
+            owner = chat_id
         if command == '/update':
             replace_only = True
         else:
             replace_only = False
-        oldvalue, newvalue = db.update_item(dbc, gameid, sender_id, container, key, change, replace_only)
+        oldvalue, newvalue = db.update_item(dbc, gameid, owner, container, key, change, replace_only)
         if newvalue is None:
             send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
         elif isinstance(oldvalue, int) and isinstance(newvalue, int):
@@ -199,8 +208,11 @@ def process_message(msg):
             send(bot, chat_id, 'Use the format: [container] [description].')
             return
         (container, description) = args
-        db.add_to_list(dbc, gameid, sender_id, container, description)
-        send(bot, chat_id, 'Added to container {}.'.format(container))
+        owner = sender_id
+        if container == db.room_container:
+            owner = chat_id
+        db.add_to_list(dbc, gameid, owner, container, description)
+        send(bot, chat_id, 'Added "{}" to container {}.'.format(description, container))
     if command == '/del':
         if not is_group:
             send(bot, chat_id, 'You must run this command in a group.')
@@ -211,7 +223,10 @@ def process_message(msg):
             send(bot, chat_id, 'Use the format: [container] [key].')
             return
         (container, key) = args
-        oldvalue = db.delete_item(dbc, gameid, sender_id, container, key)
+        owner = sender_id
+        if container == db.room_container:
+            owner = chat_id
+        oldvalue = db.delete_item(dbc, gameid, owner, container, key)
         if oldvalue == None:
             send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
         else:
@@ -223,7 +238,12 @@ def process_message(msg):
             return
         gameid = db.get_game_from_group(dbc, chat_id)
         items = db.get_items(dbc, gameid, sender_id)
+        playername = db.get_player_name(dbc, gameid, sender_id)
+        if playername is None:
+            send(bot, chat_id, 'You are not in a game.')
+            return
         ret = ''
+        ret += 'Character sheet for {}:\n'.format(playername)
         if items is None:
             send(bot, chat_id, 'No items found.')
             return

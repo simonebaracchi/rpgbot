@@ -5,6 +5,7 @@ db_version = 1
 ROLE_PLAYER = 10
 ROLE_MASTER = 20
 game_templates = ['fae']
+room_container = 'room'
 
 def open_connection():
     return sqlite3.connect(db_name)
@@ -86,6 +87,15 @@ def get_player_role(db, userid, gameid):
         return None
     role = result[0]
     return role
+
+def get_player_name(db, gameid, userid):
+    c = db.cursor()
+    query = c.execute('''SELECT playername FROM Players WHERE playerid=? AND gameid=?''', (userid, gameid,))
+    result = query.fetchone()
+    if result is None:
+        return None
+    name = result[0]
+    return name
 
 def add_player(db, userid, username, gameid, role):
     old_role = get_player_role(db, userid, gameid)
