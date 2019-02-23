@@ -137,13 +137,36 @@ def process_message(msg):
 
         value = 0
         description = ''
+
+        
+        invalid_format = False
         try:
             value, description = diceroller.roll(dice)
         except (diceroller.InvalidFormat):
-            send(bot, chat_id, 'Invalid dice format.')
-            return
+            invalid_format = True
         except (diceroller.TooManyDices):
             send(bot, chat_id, 'Sorry, try with less dices.')
+            return
+
+        if invalid_format:
+            # Check saved rolls
+            gameid = db.get_game_from_group(dbc, chat_id)
+            saved_roll = db.get_item_value(dbc, gameid, sender_id, 'rolls', dice)
+            if saved_roll is None:
+                invalid_format = True
+            else:
+                invalid_format = False
+                dice = saved_roll
+                try:
+                    value, description = diceroller.roll(dice)
+                except (diceroller.InvalidFormat):
+                    invalid_format = True
+                except (diceroller.TooManyDices):
+                    send(bot, chat_id, 'Sorry, try with less dices.')
+                    return
+
+        if invalid_format:
+            send(bot, chat_id, 'Invalid dice format.')
             return
 
         send(bot, chat_id, 'Rolled {} = {}.'.format(description, value))

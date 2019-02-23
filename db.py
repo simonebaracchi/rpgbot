@@ -219,6 +219,14 @@ def add_to_list(db, gameid, playerid, container, description):
     query = c.execute('''INSERT OR REPLACE INTO Contents(gameid, playerid, container, key, value) VALUES (?, ?, ?, ?, ?)''', (gameid, playerid, container, new, description,))
     db.commit()
 
+def get_item_value(db, gameid, playerid, container, key):
+    c = db.cursor()
+    query = c.execute('''SELECT value FROM Contents WHERE gameid=? AND playerid=? AND container=? AND key=?''', (gameid, playerid, container, key,))
+    result = query.fetchone()
+    if result == None:
+        return None
+    return result[0]
+
 def delete_item(db, gameid, playerid, container, key):
     c = db.cursor()
     query = c.execute('''SELECT value FROM Contents WHERE gameid=? AND playerid=? AND container=? AND key=?''', (gameid, playerid, container, key,))
