@@ -151,7 +151,7 @@ def process_message(msg):
         if invalid_format:
             # Check saved rolls
             gameid = db.get_game_from_group(dbc, chat_id)
-            saved_roll = db.get_item_value(dbc, gameid, sender_id, 'rolls', dice)
+            saved_roll = db.get_item_value(dbc, gameid, sender_id, db.rolls_container, dice)
             if saved_roll is None:
                 invalid_format = True
             else:

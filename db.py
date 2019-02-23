@@ -6,6 +6,7 @@ ROLE_PLAYER = 10
 ROLE_MASTER = 20
 game_templates = ['fae']
 room_container = 'room'
+rolls_container = 'rolls'
 
 def open_connection():
     return sqlite3.connect(db_name)
