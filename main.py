@@ -199,10 +199,15 @@ def process_message(msg):
             send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
             return
         args = args[1].split(maxsplit=2)
-        if len(args) != 3:
-            send(bot, chat_id, 'Use the format: [container] [key] [change].')
+        (container, key, change) = ('', '', '0')
+        if len(args) == 2:
+            (container, key) = args
+            change = '+1'
+        elif len(args) == 3:
+            (container, key, change) = args
+        else:
+            send(bot, chat_id, 'Use the format: <container> <key> [change].')
             return
-        (container, key, change) = args
         owner = sender_id
         if container == db.room_container:
             owner = chat_id
@@ -228,7 +233,7 @@ def process_message(msg):
             return
         args = args[1].split(maxsplit=1)
         if len(args) != 2:
-            send(bot, chat_id, 'Use the format: [container] [description].')
+            send(bot, chat_id, 'Use the format: <container> <description>.')
             return
         (container, description) = args
         owner = sender_id
@@ -243,7 +248,7 @@ def process_message(msg):
         gameid = db.get_game_from_group(dbc, chat_id)
         args = args[1].split()
         if len(args) != 2:
-            send(bot, chat_id, 'Use the format: [container] [key].')
+            send(bot, chat_id, 'Use the format: <container> <key>.')
             return
         (container, key) = args
         owner = sender_id
