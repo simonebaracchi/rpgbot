@@ -157,7 +157,7 @@ def process_message(msg):
                 ret += '\nRoom aspects:\n{}'.format('\n'.join(room_items))
         send(bot, chat_id, ret)
 
-    if command == '/roll':
+    if command == '/roll' or command == '/gmroll':
         if len(args) < 2:
             template = db.get_template_from_groupid(dbc, chat_id)
             if template == 'fae':
@@ -170,7 +170,6 @@ def process_message(msg):
 
         value = 0
         description = ''
-
         
         invalid_format = False
         try:
@@ -181,6 +180,7 @@ def process_message(msg):
             send(bot, chat_id, 'Sorry, try with less dices.')
             return
 
+        gameid = None
         if invalid_format:
             # Check saved rolls
             gameid = db.get_game_from_group(dbc, chat_id)
@@ -202,7 +202,31 @@ def process_message(msg):
             send(bot, chat_id, 'Invalid dice format.')
             return
 
-        send(bot, chat_id, 'Rolled {} = {}.'.format(description, value))
+        if command == '/roll':
+            send(bot, chat_id, 'Rolled {} = {}.'.format(description, value))
+        elif command == '/gmroll':
+            if gameid is None:
+                gameid = db.get_game_from_group(dbc, chat_id)
+            if gameid is None:
+                send(bot, chat_id, 'You are not in a game.')
+                return
+            playername = db.get_player_name(dbc, gameid, sender_id)
+            if playername is None:
+                send(bot, chat_id, 'You are not in a game.')
+                return
+            masters = db.get_masters_for_game(dbc, gameid)
+
+            try:
+                send(bot, sender_id, 'Rolled {} = {}.'.format(description, value))
+            except telepot.exception.TelegramError:
+                send(bot, chat_id, '{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
+            for master in masters:
+                if sender_id == master:
+                    continue
+                try:
+                    send(bot, master, '{} ({}) rolled {} = {}.'.format(playername, username, description, value))
+                except telepot.exception.TelegramError:
+                    send(bot, chat_id, '{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
 
     if command == '/player':
         if not is_group:

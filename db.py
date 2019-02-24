@@ -127,6 +127,14 @@ def add_player(db, userid, username, gameid, role):
     db.commit()
     return new_player_added
 
+def get_masters_for_game(db, gameid):
+    c = db.cursor()
+    query = c.execute('''SELECT playerid FROM Players WHERE role=? AND gameid=?''', (ROLE_MASTER, gameid, ))
+    ret = []
+    for player in query:
+        ret.append(player[0])
+    return ret
+
 preferred_container_order = ['gen', 'aspects', 'stunts', 'skills', 'spells', 'inventory', 'rolls']
 preferred_key_order = {'gen': ['highconcept', 'description', 'fatepoints', 'stress2', 'stress4', 'stress6']}
 
