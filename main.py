@@ -53,6 +53,16 @@ def send(bot, chat_id, msg):
         msg = '(no message)'
     bot.sendMessage(chat_id, msg)
 
+def get_value_from(entry, value, default):
+    if isinstance(value, list):
+        for attempt in value:
+            if attempt in entry:
+                return entry[attempt]
+    elif isinstance(value, str):
+        if value in entry:
+            return entry[value]
+    return default
+
 def newgame_already_started_usage():
     return """This game was already started in this group.
 Now invite some players, make them join with `/player <character name>`, check your characters with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
@@ -80,7 +90,7 @@ def process_message(msg):
     text = msg['text']
     chat_id = msg['chat']['id']
     sender_id = msg['from']['id']
-    username = msg['from']['username']
+    username = get_value_from(msg['from'], ['username', 'first_name', 'id'], 'unknown-user-id')
     is_group = msg['chat']['type'] == 'group'
     groupname = msg['chat']['title'] if 'title' in msg['chat'] else None
 
