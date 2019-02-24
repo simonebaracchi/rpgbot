@@ -40,7 +40,7 @@ def log(msg):
 
 def log_msg(msg):
     chat_name = ''
-    username = msg['from']['username']
+    username = get_value_from(msg['from'], ['username', 'first_name', 'id'], 'unknown-user-id')
     text = msg['text']
     if 'title' in msg['chat']:
         chat_name = '{} ({})'.format(msg['chat']['title'], username)
