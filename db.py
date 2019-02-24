@@ -153,6 +153,8 @@ def get_game_from_group(db, groupid):
     c = db.cursor()
     query = c.execute('''SELECT gameid FROM Groups WHERE groupid=?''', (groupid,))
     result = query.fetchone()
+    if result is None:
+        return None
     return result[0]
 
 def get_game_info(db, gameid):
