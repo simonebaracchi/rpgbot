@@ -25,6 +25,12 @@ Join the game as a player, with the given character name (or update your charact
 
 Roll dices. Defaults to 4dF. Supports regular and Fate dices, including bonus/maluses, like 2d20, 6d8+3, 8dF, 4dF-2.
 
+Saved rolls can be defined with `/add` and `/update` (see below).
+
+  - `/gmroll [<dice>]`
+
+Similar to `/roll`, but sends the results via private message to the user and the game master(s). Due to Telegram restrictions on private message, you will have to send a private message to the bot before being able to receive rolls privately.
+
   - `/show`
 
 Shows your character sheet and inventory contents.
@@ -37,7 +43,7 @@ It can be used to add anything to your character sheet, e.g. your character desc
 
 The special container "room" will add an item to the room; it will be shared with all players in the group, as such it is useful for setting stuff like room aspects. Items in the room can then be shown with /showgame.
 
-The special container "rolls" will store saved rolls. They can then be recalled with `/roll`.
+The special container "rolls" will store saved rolls. Use the dice definition (e.g. `1d20+1`) as value. They can then be recalled with `/roll`.
 
   - `/addlist <container> <item description>`
 
