@@ -68,7 +68,7 @@ def newgame_already_started_usage():
 Now invite some players, make them join with `/player <character name>`, check your characters with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
 For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot."""
 
-def start_in_private_msg_usage():
+def start_usage():
     return """Howdy, human.
 I am a character sheet bot for Fate RPG.
 To use my services, add me to a group, then start a new game with `/newgame <game name>`.
@@ -359,9 +359,7 @@ def process_message(msg):
         send(bot, chat_id, ret)
 
     if command == '/start':
-        if is_group:
-            return
-        send(bot, chat_id, start_in_private_msg_usage())
+        send(bot, chat_id, start_usage())
 
     db.close_connection(dbc)
 
