@@ -255,6 +255,9 @@ def process_message(msg):
         if command == '/add' and db.number_of_items(dbc, gameid, sender_id) > 50:
             send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
             return
+        if len(args) < 2:
+            send(bot, chat_id, 'Use the format: /add <container> <key> [change].')
+            return
         args = args[1].split(maxsplit=2)
         (container, key, change) = ('', '', '0')
         if len(args) == 2:
@@ -263,7 +266,7 @@ def process_message(msg):
         elif len(args) == 3:
             (container, key, change) = args
         else:
-            send(bot, chat_id, 'Use the format: <container> <key> [change].')
+            send(bot, chat_id, 'Use the format: /add <container> <key> [change].')
             return
         owner = sender_id
         if container == db.room_container:
@@ -288,9 +291,12 @@ def process_message(msg):
         if db.number_of_items(dbc, gameid, sender_id) > 50:
             send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
             return
+        if len(args) < 2:
+            send(bot, chat_id, 'Use the format: /addlist <container> <description>.')
+            return
         args = args[1].split(maxsplit=1)
         if len(args) != 2:
-            send(bot, chat_id, 'Use the format: <container> <description>.')
+            send(bot, chat_id, 'Use the format: /addlist <container> <description>.')
             return
         (container, description) = args
         owner = sender_id
@@ -302,10 +308,13 @@ def process_message(msg):
         if not is_group:
             send(bot, chat_id, 'You must run this command in a group.')
             return
+        if len(args) < 2:
+            send(bot, chat_id, 'Use the format: /del <container> <key>.')
+            return
         gameid = db.get_game_from_group(dbc, chat_id)
         args = args[1].split()
         if len(args) != 2:
-            send(bot, chat_id, 'Use the format: <container> <key>.')
+            send(bot, chat_id, 'Use the format: /del <container> <key>.')
             return
         (container, key) = args
         owner = sender_id
