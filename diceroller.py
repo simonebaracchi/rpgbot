@@ -14,6 +14,10 @@ First check these keep working in a regex tester (like regex101)
 0dF
 4dF+1
 4dF-1
+d20
+dF
+d20+1
+dF+3
 
 these other should be rejected:
 8d10-
@@ -39,7 +43,7 @@ def roll(dice):
 
     ret = 0
     string = ''
-    m = re.search('^([0-9]+)d([0-9]+|[F])(?:([\+\-])([0-9]+))?$', dice)
+    m = re.search('^([0-9]+)?d([0-9]+|[F])(?:([\+\-])([0-9]+))?$', dice)
     if m is not None:
         # DnD dice
         dices = m.group(1)
@@ -49,10 +53,13 @@ def roll(dice):
 
     # check number of dices
     dices_int = 0
-    try:
-        dices_int = int(dices)
-    except:
-        raise InvalidFormat
+    if dices is None:
+        dices_int = 1
+    else:
+        try:
+            dices_int = int(dices)
+        except:
+            raise InvalidFormat
     if dices_int > 100:
         raise TooManyDices
     if dices_int <= 0:
