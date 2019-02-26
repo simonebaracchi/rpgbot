@@ -59,19 +59,21 @@ Delete an item (or another a character sheet entry).
 
 ### Examples
 
-`/add inventory short-sword`
+`/add inventory short-sword` (add an item named "short-sword" to the container "inventory" with a default value of 1)
 
-`/add rolls attack 1d6+2`
+`/add rolls attack 1d6+2` (saves a roll named "attack" with value 1d6+2)
 
-`/roll attack`
+`/roll attack` (rolls the previously saved dice)
 
-`/update rolls attack 2d4+1`
+`/update rolls attack 2d4+1` (changes the previosly saved roll to a different dice, 2d4+1)
 
-`/update inventory coins +100`
+`/update inventory coins +100` (adds 100 coins to your inventory; will fail if you misspelled anything)
 
-`/update gen fatepoints`
+`/update gen fatepoints` (increases your fatepoint by 1)
 
-`/addlist room Everything is on fire!`
+`/update gen fatepoints -1` (decreases your fatepoint by 1)
 
-`/del inventory health-potion`
+`/addlist room Everything is on fire!` (add an item on the room instead of yourself; can be seen with /showgame)
+
+`/del inventory health-potion` (deletes all items named "health-potion" from your inventory)
 
