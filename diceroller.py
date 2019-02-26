@@ -50,19 +50,7 @@ def roll(dice):
         sides = m.group(2)
         bonustype = m.group(3)
         bonus = m.group(4)
-
-    # check number of dices
-    dices_int = 0
-    if dices is None:
-        dices_int = 1
     else:
-        try:
-            dices_int = int(dices)
-        except:
-            raise InvalidFormat
-    if dices_int > 100:
-        raise TooManyDices
-    if dices_int <= 0:
         raise InvalidFormat
 
     # check number of sides
@@ -78,6 +66,23 @@ def roll(dice):
             raise TooManyDices
         if sides_int <= 0:
             raise InvalidFormat
+
+    # check number of dices
+    dices_int = 0
+    if dices is None:
+        if sides == 'F':
+            dices_int = 4
+        else:
+            dices_int = 1
+    else:
+        try:
+            dices_int = int(dices)
+        except:
+            raise InvalidFormat
+    if dices_int > 100:
+        raise TooManyDices
+    if dices_int <= 0:
+        raise InvalidFormat
 
     # check bonus type
     bonus_mult = None
