@@ -1,13 +1,15 @@
 # rpgbot
-RPG helper bot for Telegram. Manages character sheets, dice rolls, and some other stuff.
+RPG helper bot for Telegram. Manages character sheets, dice rolls, and game state.
 
-I wrote this as a very generic RPG tool. Character sheets are fully custom and are structured as "container - key - value" data. Currently, basic character sheets for Fate Accelerated RPG are automatically generated, but they can be customized after creation.
+**Want to try it?** Message @character_sheet_bot on Telegram.
+
+I wrote this as a very generic tool for pen-and-paper RPGs, but via Telegram. Character sheets are fully custom and are structured as "container - key - value" data. It is up to you what your character sheet is made up of, except for a "template" sheet (based on Fate Accelerated RPG) that is automatically generated for new players, but it can be fully customized afterwards.
 
 Commands:
 
   - `/newgame <name>`
 
-Creates a new game by that name. Must be used in a Telegram group chat, the game will run in the current gorup. The user that creates a game becomes the game master. Other players can join with `/player`.
+Creates a new game by that name. Must be used in a Telegram group chat, the game will run in the current group. The user that creates a game becomes the game master. Other players can join with `/player <name>` (see below).
 
   - `/delgame`
 
@@ -19,13 +21,13 @@ Show game statistics (name, players, etc.)
 
   - `/player <name>`
 
-Join the game as a player, with the given character name (or update your characters name).
+Join the game as a player, with the given character name (or update your characters name if you already joined the game).
 
   - `/roll [<dice>]`
 
 Roll dices. Defaults to 4dF. Supports regular and Fate dices, including bonus/maluses, like 2d20, 6d8+3, 8dF, 4dF-2.
 
-Saved rolls can be defined with `/add` and `/update` (see below).
+Saved rolls can be defined with `/add rolls` and `/update rolls` (see below).
 
   - `/gmroll [<dice>]`
 
@@ -59,6 +61,14 @@ Delete an item (or another a character sheet entry).
 
 ### Examples
 
+`/newgame The tales of Github` (starts a new game with this name; the user starting the game becomes the game master)
+
+`/player Octocat` (renames your character to Octocat, or, joins the game with that name)
+
+`/show` (check your character sheet contents)
+
+`/update gen highconcept He is the ultimate keeper of the Source.` (changes the high concept in your character sheet)
+
 `/add inventory short-sword` (add an item named "short-sword" to the container "inventory" with a default value of 1)
 
 `/add rolls attack 1d6+2` (saves a roll named "attack" with value 1d6+2)
@@ -67,7 +77,7 @@ Delete an item (or another a character sheet entry).
 
 `/update rolls attack 2d4+1` (changes the previosly saved roll to a different dice, 2d4+1)
 
-`/update inventory coins +100` (adds 100 coins to your inventory; will fail if you misspelled anything)
+`/update inventory coins +100` (adds 100 coins to your inventory; will fail if you don't have an item by that name already)
 
 `/update gen fatepoints` (increases your fatepoint by 1)
 
@@ -77,3 +87,4 @@ Delete an item (or another a character sheet entry).
 
 `/del inventory health-potion` (deletes all items named "health-potion" from your inventory)
 
+`/showgame` (shows the game state, such as, its name, the players, the gm, the room aspects)
