@@ -18,6 +18,12 @@ d20
 dF
 d20+1
 dF+3
+4df
+0df
+4df+1
+4df-1
+df
+df+3
 
 these other should be rejected:
 8d10-
@@ -43,7 +49,7 @@ def roll(dice):
 
     ret = 0
     string = ''
-    m = re.search('^([0-9]+)?d([0-9]+|[F])(?:([\+\-])([0-9]+))?$', dice)
+    m = re.search('^([0-9]+)?d([0-9]+|[Ff])(?:([\+\-])([0-9]+))?$', dice)
     if m is not None:
         # DnD dice
         dices = m.group(1)
@@ -55,8 +61,8 @@ def roll(dice):
 
     # check number of sides
     sides_int = 0
-    if sides == 'F':
-        pass
+    if sides == 'F' or sides == 'f':
+        sides = 'F'
     else:
         try:
             sides_int = int(sides)
