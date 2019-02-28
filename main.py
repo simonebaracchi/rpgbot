@@ -15,7 +15,7 @@ import db
 import diceroller
 
 log_file = 'service.log'
-
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 class Operation:
     def __init__(self, id, type, name):
