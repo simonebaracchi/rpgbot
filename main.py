@@ -157,7 +157,7 @@ def process_message(msg):
                 ret += '\nRoom aspects:\n{}'.format('\n'.join(room_items))
         send(bot, chat_id, ret)
 
-    if command == '/roll' or command == '/gmroll':
+    if command == '/roll' or command == '/r' or command == '/gmroll':
         if len(args) < 2:
             template = db.get_template_from_groupid(dbc, chat_id)
             if template == 'fae':
@@ -202,7 +202,7 @@ def process_message(msg):
             send(bot, chat_id, 'Invalid dice format.')
             return
 
-        if command == '/roll':
+        if command == '/roll' or command == '/r':
             send(bot, chat_id, 'Rolled {} = {}.'.format(description, value))
         elif command == '/gmroll':
             if gameid is None:
