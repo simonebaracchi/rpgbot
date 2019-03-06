@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Telegram RPG Character Sheet bot
 
 from pprint import pprint
@@ -13,6 +13,7 @@ import json
 import config
 import db
 import diceroller
+import commands
 
 log_file = 'service.log'
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -63,11 +64,6 @@ def get_value_from(entry, value, default):
             return entry[value]
     return default
 
-def newgame_already_started_usage():
-    return """This game was already started in this group.
-Now invite some players, make them join with `/player <character name>`, check your characters with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
-For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot."""
-
 def start_usage():
     return """Howdy, human.
 I am a character sheet bot for Fate RPG.
@@ -97,6 +93,14 @@ def process_message(msg):
     # avoid logging and processing every single message.
     if text[0] != '/':
         return
+    # get command, ignore bot username
+    args=text.split(maxsplit=1)
+    command = args[0]
+    if '@' in command:
+        more_split = command.split('@', maxsplit=1)
+        command = more_split[0]
+    # skip '/'
+    command = command[1:]
 
     log_msg(msg)
     dbc = db.open_connection()
@@ -104,43 +108,23 @@ def process_message(msg):
     if sender_id in config.admins:
        is_admin = True
 
-    args=text.split(maxsplit=1)
-    command = args[0]
-    if command == '/newgame':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        if len(args) < 2:
-            send(bot, chat_id, 'Please specify the game name like this: `/newgame <name>`.')
-            return
-        if db.number_of_games(dbc, sender_id) > 10:
-            send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        if gameid is not None:
-            send(bot, chat_id, newgame_already_started_usage())
-            return
-        gameid = db.new_game(dbc, sender_id, username, args[1], chat_id, groupname, 'fae')
-        if gameid is None:
-            send(bot, chat_id, newgame_already_started_usage())
-            return
+    cmd_params = {
+        'bot': bot,
+        'dbc': dbc,
+        'chat_id': chat_id,
+        'sender_id': sender_id,
+        'username': username,
+        'groupname': groupname,
+        'input_args': args,
+        'is_group': is_group
+        }
 
-        db.add_default_items(dbc, sender_id, gameid, 'fae')
-        send(bot, chat_id, 'New game created: {}.'.format(args[1]))
-    if command == '/delgame':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        if gameid is None:
-            send(bot, chat_id, 'No game found.')
-            return
-        role = db.get_player_role(dbc, sender_id, gameid)
-        if role != db.ROLE_MASTER:
-            send(bot, chat_id, 'You need to be a game master to close a game.')
-            return
-        db.del_game(dbc, gameid)
-        send(bot, chat_id, 'GG, humans.')
+    if command in commands.all_commands:
+        return commands.all_commands[command](**cmd_params)
+
+    # do I really have legacy code already?
+    command = '/' + command
+
     if command == '/showgame':
         if not is_group:
             send(bot, chat_id, 'You must run this command in a group.')
