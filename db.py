@@ -205,8 +205,11 @@ def update_item(db, gameid, playerid, container, key, change, replace_only):
     else:
         oldvalue = result[0]
 
-    if oldvalue is not None and oldvalue.isdigit() and (change.isdigit() or (change[0] in ['+', '-'] and change[1:].isdigit())):
-        oldvalue = int(oldvalue)
+    if (oldvalue is None or oldvalue.isdigit()) and (change.isdigit() or (change[0] in ['+', '-'] and change[1:].isdigit())):
+        if oldvalue is None:
+            oldvalue = 0
+        else:
+            oldvalue = int(oldvalue)
         if change[0] == '+':
             newvalue = oldvalue + int(change[1:])
         elif change[0] == '-':
