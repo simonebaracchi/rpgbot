@@ -12,7 +12,6 @@ import json
 
 import config
 import db
-import diceroller
 import commands
 
 log_file = 'service.log'
@@ -49,11 +48,6 @@ def log_msg(msg):
         chat_name = username
     log('{}: {}'.format(chat_name, text))
     
-def send(bot, chat_id, msg):
-    if msg == None or len(msg) == 0 or len(msg.split()) == 0:
-        msg = '(no message)'
-    bot.sendMessage(chat_id, msg)
-
 def get_value_from(entry, value, default):
     if isinstance(value, list):
         for attempt in value:
@@ -63,16 +57,6 @@ def get_value_from(entry, value, default):
         if value in entry:
             return entry[value]
     return default
-
-def start_usage():
-    return """Howdy, human.
-I am a character sheet bot for Fate RPG.
-To use my services, add me to a group, then start a new game with `/newgame <game name>`.
-Other players can join with `/player <character name>`.
-You can check your character with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
-This is only a quick starter guide. For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot.
-
-Hope you have fun!"""
 
 def process_message(msg):
     """
@@ -94,7 +78,7 @@ def process_message(msg):
     if text[0] != '/':
         return
     # get command, ignore bot username
-    args=text.split(maxsplit=1)
+    args=text.split()
     command = args[0]
     if '@' in command:
         more_split = command.split('@', maxsplit=1)
@@ -116,243 +100,12 @@ def process_message(msg):
         'username': username,
         'groupname': groupname,
         'input_args': args,
-        'is_group': is_group
+        'is_group': is_group,
+        'command': command
         }
 
     if command in commands.all_commands:
         return commands.all_commands[command](**cmd_params)
-
-    # do I really have legacy code already?
-    command = '/' + command
-
-    if command == '/showgame':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        gamename, groups, players = db.get_game_info(dbc, gameid)
-        players_string = [x + (' (gm)' if (y == db.ROLE_MASTER) else '') for x,y in players.items()]
-        ret = '{}\nGroups: {}\nPlayers: {}'.format(gamename, ', '.join(groups), ', '.join(players_string))
-
-        items = db.get_items(dbc, gameid, chat_id)
-        if db.room_container in items:
-            room_items = ['  - {}: {}\n'.format(key, items[db.room_container][key]) for key in sorted(items[db.room_container])]
-            if len(room_items) > 0:
-                ret += '\nRoom aspects:\n{}'.format('\n'.join(room_items))
-        send(bot, chat_id, ret)
-
-    if command == '/roll' or command == '/r' or command == '/gmroll':
-        if len(args) < 2:
-            template = db.get_template_from_groupid(dbc, chat_id)
-            if template == 'fae':
-                dice = '4dF'
-            else:
-                # more templates here
-                dice = '1d20'
-        else:
-            dice = args[1].strip()
-
-        value = 0
-        description = ''
-        
-        invalid_format = False
-        try:
-            value, description = diceroller.roll(dice)
-        except (diceroller.InvalidFormat):
-            invalid_format = True
-        except (diceroller.TooManyDices):
-            send(bot, chat_id, 'Sorry, try with less dices.')
-            return
-
-        gameid = None
-        if invalid_format:
-            # Check saved rolls
-            gameid = db.get_game_from_group(dbc, chat_id)
-            saved_roll = db.get_item_value(dbc, gameid, sender_id, db.rolls_container, dice)
-            if saved_roll is None:
-                invalid_format = True
-            else:
-                invalid_format = False
-                dice = saved_roll
-                try:
-                    value, description = diceroller.roll(dice)
-                except (diceroller.InvalidFormat):
-                    invalid_format = True
-                except (diceroller.TooManyDices):
-                    send(bot, chat_id, 'Sorry, try with less dices.')
-                    return
-
-        if invalid_format:
-            send(bot, chat_id, 'Invalid dice format.')
-            return
-
-        if command == '/roll' or command == '/r':
-            send(bot, chat_id, 'Rolled {} = {}.'.format(description, value))
-        elif command == '/gmroll':
-            if gameid is None:
-                gameid = db.get_game_from_group(dbc, chat_id)
-            if gameid is None:
-                send(bot, chat_id, 'You are not in a game.')
-                return
-            playername = db.get_player_name(dbc, gameid, sender_id)
-            if playername is None:
-                send(bot, chat_id, 'You are not in a game.')
-                return
-            masters = db.get_masters_for_game(dbc, gameid)
-
-            try:
-                send(bot, sender_id, 'Rolled {} = {}.'.format(description, value))
-            except telepot.exception.TelegramError:
-                send(bot, chat_id, '{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
-            for master in masters:
-                if sender_id == master:
-                    continue
-                try:
-                    send(bot, master, '{} ({}) rolled {} = {}.'.format(playername, username, description, value))
-                except telepot.exception.TelegramError:
-                    send(bot, chat_id, '{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
-
-    if command == '/player':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        if len(args) < 2:
-            send(bot, chat_id, 'Please specify the player name.')
-            return
-        if db.number_of_games(dbc, sender_id) > 10:
-            send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        new_player_added = db.add_player(dbc, sender_id, args[1], gameid, db.ROLE_PLAYER)
-        if new_player_added:
-            template = db.get_template_from_gameid(dbc, gameid)
-            db.add_default_items(dbc, sender_id, gameid, template)
-            send(bot, chat_id, 'Welcome, {}.'.format(args[1]))
-        else:
-            send(bot, chat_id, 'You will now be known as {}.'.format(args[1]))
-
-    if command == '/update' or command == '/add':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        if command == '/add' and db.number_of_items(dbc, gameid, sender_id) > 50:
-            send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
-            return
-        if len(args) < 2:
-            send(bot, chat_id, 'Use the format: /add <container> <key> [change].')
-            return
-        args = args[1].split(maxsplit=2)
-        (container, key, change) = ('', '', '0')
-        if len(args) == 2:
-            (container, key) = args
-            change = '+1'
-        elif len(args) == 3:
-            (container, key, change) = args
-        else:
-            send(bot, chat_id, 'Use the format: /add <container> <key> [change].')
-            return
-        owner = sender_id
-        if container == db.room_container:
-            owner = chat_id
-        if command == '/update':
-            replace_only = True
-        else:
-            replace_only = False
-        oldvalue, newvalue = db.update_item(dbc, gameid, owner, container, key, change, replace_only)
-        if newvalue is None:
-            send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
-        elif isinstance(oldvalue, int) and isinstance(newvalue, int):
-            send(bot, chat_id, 'Updated {}/{} from {} to {} (changed {}).'.format(container, key, 
-                 oldvalue, newvalue, newvalue-oldvalue))
-        else:
-            send(bot, chat_id, 'Updated {}/{} to "{}".'.format(container, key, newvalue))
-    if command == '/addlist':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        if db.number_of_items(dbc, gameid, sender_id) > 50:
-            send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
-            return
-        if len(args) < 2:
-            send(bot, chat_id, 'Use the format: /addlist <container> <description>.')
-            return
-        args = args[1].split(maxsplit=1)
-        if len(args) != 2:
-            send(bot, chat_id, 'Use the format: /addlist <container> <description>.')
-            return
-        (container, description) = args
-        owner = sender_id
-        if container == db.room_container:
-            owner = chat_id
-        db.add_to_list(dbc, gameid, owner, container, description)
-        send(bot, chat_id, 'Added "{}" to container {}.'.format(description, container))
-    if command == '/del':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        if len(args) < 2:
-            send(bot, chat_id, 'Use the format: /del <container> <key>.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        args = args[1].split()
-        if len(args) != 2:
-            send(bot, chat_id, 'Use the format: /del <container> <key>.')
-            return
-        (container, key) = args
-        owner = sender_id
-        if container == db.room_container:
-            owner = chat_id
-        oldvalue = db.delete_item(dbc, gameid, owner, container, key)
-        if oldvalue == None:
-            send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
-        else:
-            send(bot, chat_id, 'Deleted {}/{} (was {}).'.format(container, key, oldvalue))
-
-    if command == '/show':
-        if not is_group:
-            send(bot, chat_id, 'You must run this command in a group.')
-            return
-        gameid = db.get_game_from_group(dbc, chat_id)
-        items = db.get_items(dbc, gameid, sender_id)
-        playername = db.get_player_name(dbc, gameid, sender_id)
-        if playername is None:
-            send(bot, chat_id, 'You are not in a game.')
-            return
-        ret = ''
-        ret += 'Character sheet for {}:\n'.format(playername)
-        if items is None:
-            send(bot, chat_id, 'No items found.')
-            return
-        for container in db.preferred_container_order:
-            if container not in items:
-                continue
-            if container in db.preferred_key_order:
-                keys = db.preferred_key_order[container]
-            else:
-                keys = []
-            ret += container + ':\n'
-            # print keys in preferred order
-            for key in keys:
-                if key not in items[container]:
-                    continue
-                ret += '  - {} ({})\n'.format(key, items[container][key])
-                del items[container][key]
-            # print remaining keys
-            for key in sorted(items[container]):
-                ret += '  - {} ({})\n'.format(key, items[container][key])
-            del items[container]
-            
-        # print everything in remaining containers
-        for container in items:
-            ret += container + ':\n'
-            for key in items[container]:
-                ret += '  - {} ({})\n'.format(key, items[container][key])
-        send(bot, chat_id, ret)
-
-    if command == '/start':
-        send(bot, chat_id, start_usage())
 
     db.close_connection(dbc)
 
