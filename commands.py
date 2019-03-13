@@ -1,5 +1,7 @@
 import telepot
 import functools
+from collections import OrderedDict
+
 import db
 import diceroller
 
@@ -10,20 +12,14 @@ def newgame_already_started_usage():
 Now invite some players, make them join with `/player <character name>`, check your characters with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
 For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot."""
 
-def start_usage():
+def start_usage_not_in_group():
     return """Howdy, human.
 I am a character sheet bot for Fate RPG.
-To use my services, add me to a group, then start a new game with `/newgame <game name>`.
-Other players can join with `/player <character name>`.
-You can check your character with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
-This is only a quick starter guide. For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot.
+To use my services, add me to a group, invite other players, and call me again to start a new game.
+Use the inline keyboard to navigate my character sheet functions, or use the shortcut `/roll` to roll dices.
+For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot.
 
 Hope you have fun!"""
-
-def send(bot, chat_id, msg, disablepreview=True):
-    if msg == None or len(msg) == 0 or len(msg.split()) == 0:
-        msg = '(no message)'
-    bot.sendMessage(chat_id, msg, disable_web_page_preview=disablepreview)
 
 def add_command(name):
     global all_commands
@@ -38,53 +34,123 @@ def add_command(name):
 def need_args(number, errormessage):
     def decorator(func):
         @functools.wraps(func)
-        def wrapper(*args, bot, chat_id, input_args, **kwargs):
-            if len(input_args) < 1 + number:
-                send(bot, chat_id, errormessage)
+        def wrapper(handler):
+            if len(handler.args) < 1 + number:
+                handler.send(errormessage)
                 return False
-            return func(*args, bot=bot, chat_id=chat_id, input_args=input_args, **kwargs)
+            return func(handler)
+        return wrapper 
+    return decorator
+
+def read_args(string, argname):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(handler, **kwargs):
+            handler.send(string)
+            handler.read_answer(func, argname, kwargs)
+        return wrapper 
+    return decorator
+
+def choose_container(string, argname, allownew, adding):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(handler, **kwargs):
+            items = db.get_items(handler.dbc, handler.group.gameid, handler.sender_id)
+            room = db.get_items(handler.dbc, handler.group.gameid, handler.chat_id)
+            options = OrderedDict()
+            if adding:
+                # show special containers even if empty
+                options['Room items'] = db.room_container
+                options['Saved rolls'] = db.rolls_container
+            else:
+                # show special containers if not empty
+                if db.room_container in room:
+                    options['Room items'] = db.room_container
+                if db.rolls_container in items:
+                    options['Saved rolls'] = db.rolls_container
+            for container in items.keys():
+                if container == db.rolls_container:
+                    continue
+                else:
+                    options[container] = container
+            if allownew:
+                options['New container...'] = '__new__container__'
+                handler.send(string, options=options)
+                kwargs['containercallback'] = func
+                kwargs['argname'] = argname
+                handler.read_answer(new_container_callback, 'newcontainer', kwargs)
+            else:
+                handler.send(string, options=options)
+                handler.read_answer(func, argname, kwargs)
+        return wrapper 
+    return decorator
+
+def new_container_callback(handler, newcontainer, argname, containercallback, **kwargs):
+    if newcontainer == '__new__container__':
+        handler.send('How do you want to name the container?')
+        handler.read_answer(containercallback, argname, kwargs)
+    else:
+        kwargs[argname] = newcontainer
+        return containercallback(handler, **kwargs)
+
+def choose_item(string, argname):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(handler, container, **kwargs):
+            if container == db.room_container:
+                items = db.get_items(handler.dbc, handler.group.gameid, handler.chat_id)
+            else: 
+                items = db.get_items(handler.dbc, handler.group.gameid, handler.sender_id)
+            options = OrderedDict()
+            for key, value in items[container].items():
+                options['{} ({})'.format(key, value)] = key
+            handler.send(string, options=options)
+            kwargs['container'] = container
+            handler.read_answer(func, argname, kwargs)
         return wrapper 
     return decorator
 
 def need_group(func):
     @functools.wraps(func)
-    def wrapper(*args, bot, chat_id, is_group, **kwargs):
-        if is_group is not True:
-            send(bot, chat_id, 'You must run this command in a group.')
+    def wrapper(handler):
+        if handler.is_group is not True:
+            handler.send('You must run this command in a group.')
             return False
-        return func(*args, bot=bot, chat_id=chat_id, is_group=is_group, **kwargs)
+        return func(handler)
     return wrapper 
 
 def check_too_many_games(func):
     @functools.wraps(func)
-    def wrapper(*args, dbc, bot, chat_id, sender_id, **kwargs):
-        if db.number_of_games(dbc, sender_id) > 10:
-            send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
+    def wrapper(handler):
+        if db.number_of_games(handler.dbc, handler.sender_id) > 1:
+            handler.send('Sorry, only one game at a time is currently supported.')
             return False
-        return func(*args, dbc=dbc, bot=bot, chat_id=chat_id, sender_id=sender_id, **kwargs)
+        return func(handler)
     return wrapper 
 
 def need_gameid(mustbenone, errormessage=None):
     def decorator(func):
         @functools.wraps(func)
-        def wrapper(*args, bot, dbc, chat_id, **kwargs):
-            gameid = db.get_game_from_group(dbc, chat_id)
-            if mustbenone is True and gameid is not None or mustbenone is False and gameid is None:
-                send(bot, chat_id, errormessage)
+        def wrapper(handler):
+            group, player = db.get_group_from_playerid(handler.dbc, handler.sender_id)
+            handler.group = group
+            handler.player = player
+            if mustbenone is True and group is not None or mustbenone is False and group is None:
+                handler.send(errormessage)
                 return False
-            return func(*args, bot=bot, dbc=dbc, gameid=gameid, chat_id=chat_id, **kwargs)
+            return func(handler)
         return wrapper 
     return decorator 
 
 def need_role(role, errormessage):
     def decorator(func):
         @functools.wraps(func)
-        def wrapper(*args, bot, dbc, sender_id, gameid, chat_id, **kwargs):
-            user_role = db.get_player_role(dbc, sender_id, gameid)
+        def wrapper(handler):
+            user_role = db.get_player_role(handler.dbc, handler.sender_id, handler.group.gameid)
             if user_role != role:
-                send(bot, chat_id, errormessage)
+                handler.send(errormessage)
                 return False
-            return func(*args, bot=bot, dbc=dbc, gameid=gameid, sender_id=sender_id, chat_id=chat_id, **kwargs)
+            return func(handler)
         return wrapper 
     return decorator 
 
@@ -92,74 +158,94 @@ def need_role(role, errormessage):
 @add_command('newgame')
 @need_group
 @need_gameid(mustbenone=True, errormessage=newgame_already_started_usage())
-@need_args(1, 'Please specify the game name like this: `/newgame <name>`.')
+#@need_args(1, 'Please specify the game name like this: `/newgame <name>`.')
 @check_too_many_games
-def newgame(bot, dbc, chat_id, sender_id, username, groupname, input_args, *args, **kwargs):
-    if db.number_of_games(dbc, sender_id) > 10:
-        send(bot, chat_id, 'You exceeded the maximum number of games. Please close some first.')
+@read_args('What should the game name be?', 'name')
+def newgame(handler, name):
+    if db.number_of_games(handler.dbc, handler.sender_id) > 10:
+        handler.send('You exceeded the maximum number of games. Please close some first.')
         return False
-    gamename = ' '.join(input_args[1:])
-    gameid = db.new_game(dbc, sender_id, username, gamename, chat_id, groupname, 'fae')
+    gameid = db.new_game(handler.dbc, handler.sender_id, handler.username, name, handler.chat_id, handler.groupname, 'fae')
     if gameid is None:
-        send(bot, chat_id, newgame_already_started_usage())
+        handler.send(newgame_already_started_usage())
         return False
 
-    db.add_default_items(dbc, sender_id, gameid, 'fae')
-    send(bot, chat_id, 'New game created: {}.'.format(gamename))
+    db.add_default_items(handler.dbc, handler.sender_id, gameid, 'fae')
+    handler.send('New game created: {}.'.format(name))
 
 
 @add_command('delgame')
 @need_group
 @need_gameid(mustbenone=False, errormessage='No game found.')
 @need_role(db.ROLE_MASTER, 'You need to be a game master to close a game.')
-def delgame(bot, dbc, chat_id, gameid, *args, **kwargs):
-    db.del_game(dbc, gameid)
-    send(bot, chat_id, 'GG, humans.')
+def delgame(handler):
+    db.del_game(handler.dbc, handler.group.gameid)
+    handler.send('GG, humans.')
 
 @add_command('showgame')
-@need_group
 @need_gameid(mustbenone=False, errormessage='No game found.')
-def showgame(bot, dbc, gameid, chat_id, *args, **kwargs):
-    gamename, groups, players = db.get_game_info(dbc, gameid)
+def showgame(handler):
+    gamename, groups, players = db.get_game_info(handler.dbc, handler.group.gameid)
     players_string = [x + (' (gm)' if (y == db.ROLE_MASTER) else '') for x,y in players.items()]
     ret = '{}\nGroups: {}\nPlayers: {}'.format(gamename, ', '.join(groups), ', '.join(players_string))
 
-    items = db.get_items(dbc, gameid, chat_id)
+    items = db.get_items(handler.dbc, handler.group.gameid, handler.chat_id)
     if db.room_container in items:
         room_items = ['  - {}: {}\n'.format(key, items[db.room_container][key]) for key in sorted(items[db.room_container])]
         if len(room_items) > 0:
             ret += '\nRoom aspects:\n{}'.format('\n'.join(room_items))
-    send(bot, chat_id, ret)
+    handler.send(ret)
 
 @add_command('player')
 @need_group
 @need_gameid(mustbenone=False, errormessage='No game found.')
-@need_args(1, 'Please specify the player name like this: `/player <name>`.')
+#@need_args(1, 'Please specify the player name like this: `/player <name>`.')
 @check_too_many_games
-def player(bot, dbc, chat_id, sender_id, gameid, input_args, *args, **kwargs):
-    new_player_added = db.add_player(dbc, sender_id, input_args[1], gameid, db.ROLE_PLAYER)
+@read_args('What is your name, adventurer?', 'name')
+def player(handler, name):
+    new_player_added = db.add_player(handler.dbc, handler.sender_id, name, handler.group.gameid, db.ROLE_PLAYER)
     if new_player_added:
-        template = db.get_template_from_gameid(dbc, gameid)
-        db.add_default_items(dbc, sender_id, gameid, template)
-        send(bot, chat_id, 'Welcome, {}.'.format(input_args[1]))
+        template = db.get_template_from_gameid(handler.dbc, handler.gameid)
+        db.add_default_items(handler.dbc, handler.sender_id, handler.group.gameid, template)
+        handler.send('Welcome, {}.'.format(name))
     else:
-        send(bot, chat_id, 'You will now be known as {}.'.format(input_args[1]))
+        handler.send('You will now be known as {}.'.format(name))
+
+@add_command('add')
+@need_gameid(mustbenone=False, errormessage='No game found.')
+#@need_args(2, 'Use the format: /add <container> <key> [change].')
+@choose_container('In which container?', 'container', allownew=True, adding=True)
+@read_args('What item would you like to add?', 'key')
+@read_args('What would you like to set it to?', 'change')
+def add(handler, container, key, change):
+    command = handler.command
+    return add_or_update_item(handler, container, key, change, command)
 
 @add_command('update')
-@add_command('add')
-@need_group
 @need_gameid(mustbenone=False, errormessage='No game found.')
-@need_args(2, 'Use the format: /add <container> <key> [change].')
-def add(bot, dbc, chat_id, gameid, command, sender_id, input_args, *args, **kwargs):
+#@need_args(2, 'Use the format: /add <container> <key> [change].')
+@choose_container('In which container?', 'container', allownew=False, adding=False)
+@choose_item('Which item?', 'key')
+@read_args('What would you like to set it to?', 'change')
+def update(handler, container, key, change):
+    command = handler.command
+    return add_or_update_item(handler, container, key, change, command)
+
+def add_or_update_item(handler, container, key, change, command):
+    dbc = handler.dbc
+    gameid = handler.group.gameid
+    sender_id = handler.sender_id
+    chat_id = handler.chat_id
+
     if command == '/add' and db.number_of_items(dbc, gameid, sender_id) > 50:
-        send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
+        handler.send('You exceeded the maximum number of items. Please delete some first.')
         return
-    container = input_args[1]
-    key = input_args[2]
-    if len(input_args) <= 3:
-        change = '+1'
-    else:
-        change = ' '.join(input_args[3:])
+    #container = input_args[1]
+    #key = input_args[2]
+    #if len(input_args) <= 3:
+    #   change = '+1'
+    #else:
+    #    change = ' '.join(input_args[3:])
     owner = sender_id
     if container == db.room_container:
         owner = chat_id
@@ -169,49 +255,63 @@ def add(bot, dbc, chat_id, gameid, command, sender_id, input_args, *args, **kwar
         replace_only = False
     oldvalue, newvalue = db.update_item(dbc, gameid, owner, container, key, change, replace_only)
     if newvalue is None:
-        send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
+        handler.send('Item {}/{} not found.'.format(container, key))
     elif isinstance(oldvalue, int) and isinstance(newvalue, int):
-        send(bot, chat_id, 'Updated {}/{} from {} to {} (changed {}).'.format(container, key, 
+        handler.send('Updated {}/{} from {} to {} (changed {}).'.format(container, key, 
              oldvalue, newvalue, newvalue-oldvalue))
     else:
-        send(bot, chat_id, 'Updated {}/{} to "{}".'.format(container, key, newvalue))
+        handler.send('Updated {}/{} to "{}".'.format(container, key, newvalue))
+
 
 @add_command('addlist')
-@need_group
 @need_gameid(mustbenone=False, errormessage='No game found.')
-@need_args(2, 'Use the format: /addlist <container> <description>.')
-def addlist(bot, dbc, chat_id, gameid, sender_id, command, input_args, *args, **kwargs):
+#@need_args(2, 'Use the format: /addlist <container> <description>.')
+@choose_container('In which container?', 'container', allownew=True, adding=True)
+@read_args('What would you like to add?', 'description')
+def addlist(handler, container, description):
+    dbc = handler.dbc
+    gameid = handler.group.gameid
+    sender_id = handler.sender_id
+    chat_id = handler.chat_id
+
     if db.number_of_items(dbc, gameid, sender_id) > 50:
-        send(bot, chat_id, 'You exceeded the maximum number of items. Please delete some first.')
+        handler.send('You exceeded the maximum number of items. Please delete some first.')
         return
-    container = input_args[1]
-    description = ' '.join(input_args[2:])
+    #container = input_args[1]
+    #description = ' '.join(input_args[2:])
     owner = sender_id
     if container == db.room_container:
         owner = chat_id
     db.add_to_list(dbc, gameid, owner, container, description)
-    send(bot, chat_id, 'Added "{}" to container {}.'.format(description, container))
+    handler.send('Added "{}" to container {}.'.format(description, container))
 
 @add_command('del')
-@need_group
 @need_gameid(mustbenone=False, errormessage='No game found.')
-@need_args(2, 'Use the format: /del <container> <key>.')
-def delitem(bot, dbc, chat_id, gameid, command, sender_id, input_args, *args, **kwargs):
-    container = input_args[1]
-    key = input_args[2]
+@choose_container('In which container?', 'container', allownew=False, adding=False)
+@choose_item('Which item?', 'key')
+def delitem(handler, container, key):
+    dbc = handler.dbc
+    gameid = handler.group.gameid
+    sender_id = handler.sender_id
+    chat_id = handler.chat_id
+
+    #container = input_args[1]
+    #key = input_args[2]
     owner = sender_id
     if container == db.room_container:
         owner = chat_id
     oldvalue = db.delete_item(dbc, gameid, owner, container, key)
     if oldvalue == None:
-        send(bot, chat_id, 'Item {}/{} not found.'.format(container, key))
+        handler.send('Item {}/{} not found.'.format(container, key))
     else:
-        send(bot, chat_id, 'Deleted {}/{} (was {}).'.format(container, key, oldvalue))
+        handler.send('Deleted {}/{} (was {}).'.format(container, key, oldvalue))
 
 @add_command('show')
-@need_group
 @need_gameid(mustbenone=False, errormessage='No game found.')
-def show(bot, dbc, sender_id, chat_id, gameid, command, input_args, *args, **kwargs):
+def show(handler):
+    dbc = handler.dbc
+    gameid = handler.group.gameid
+    sender_id = handler.sender_id
     items = db.get_items(dbc, gameid, sender_id)
     playername = db.get_player_name(dbc, gameid, sender_id)
     if playername is None:
@@ -220,7 +320,7 @@ def show(bot, dbc, sender_id, chat_id, gameid, command, input_args, *args, **kwa
     ret = ''
     ret += 'Character sheet for {}:\n'.format(playername)
     if items is None:
-        send(bot, chat_id, 'No items found.')
+        handler.send('No items found.')
         return
     for container in db.preferred_container_order:
         if container not in items:
@@ -246,23 +346,29 @@ def show(bot, dbc, sender_id, chat_id, gameid, command, input_args, *args, **kwa
         ret += container + ':\n'
         for key in items[container]:
             ret += '  - {} ({})\n'.format(key, items[container][key])
-    send(bot, chat_id, ret)
+    handler.send(ret)
 
 @add_command('roll')
 @add_command('r')
 @add_command('gmroll')
 @need_gameid(mustbenone=None)
-def roll(bot, dbc, chat_id, gameid, sender_id, command, input_args, *args, **kwargs):
+def roll(handler):
+    dbc = handler.dbc
+    gameid = handler.group.gameid
+    groupid = handler.group.groupid
+    sender_id = handler.sender_id
+    args = handler.args
+    command = handler.command
     
-    if len(input_args) < 2:
-        template = db.get_template_from_groupid(dbc, chat_id)
+    if len(args) < 2:
+        template = db.get_template_from_groupid(dbc, groupid)
         if template == 'fae':
             dice = '4dF'
         else:
             # more templates here
             dice = '1d20'
     else:
-        dice = input_args[1].strip()
+        dice = args[1].strip()
 
     value = 0
     description = ''
@@ -273,7 +379,7 @@ def roll(bot, dbc, chat_id, gameid, sender_id, command, input_args, *args, **kwa
     except (diceroller.InvalidFormat):
         invalid_format = True
     except (diceroller.TooManyDices):
-        send(bot, chat_id, 'Sorry, try with less dices.')
+        handler.send('Sorry, try with less dices.')
         return
 
     if invalid_format:
@@ -289,38 +395,54 @@ def roll(bot, dbc, chat_id, gameid, sender_id, command, input_args, *args, **kwa
             except (diceroller.InvalidFormat):
                 invalid_format = True
             except (diceroller.TooManyDices):
-                send(bot, chat_id, 'Sorry, try with less dices.')
+                handler.send('Sorry, try with less dices.')
                 return
 
     if invalid_format:
-        send(bot, chat_id, 'Invalid dice format.')
+        handler.send('Invalid dice format.')
         return
 
     if command == 'roll' or command == 'r':
-        send(bot, chat_id, 'Rolled {} = {}.'.format(description, value))
+        handler.send('Rolled {} = {}.'.format(description, value))
     elif command == 'gmroll':
         if gameid is None:
-            send(bot, chat_id, 'You are not in a game.')
+            handler.send('You are not in a game.')
             return
         playername = db.get_player_name(dbc, gameid, sender_id)
         if playername is None:
-            send(bot, chat_id, 'You are not in a game.')
+            handler.send('You are not in a game.')
             return
         masters = db.get_masters_for_game(dbc, gameid)
 
         try:
-            send(bot, sender_id, 'You rolled {} = {}.'.format(description, value))
+            handler.send('You rolled {} = {}.'.format(description, value), target=sender_id)
         except telepot.exception.TelegramError:
-            send(bot, chat_id, '{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
+            handler.send('{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
         for master in masters:
             if sender_id == master:
                 continue
             try:
-                send(bot, master, '{} ({}) rolled {} = {}.'.format(playername, username, description, value))
+                handler.send('{} ({}) rolled {} = {}.'.format(playername, username, description, value), target=master)
             except telepot.exception.TelegramError:
-                send(bot, chat_id, '{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
+                handler.send('{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
 
 @add_command('start')
-def start(bot, chat_id, *args, **kwargs):
-    send(bot, chat_id, start_usage())
+def start(handler):
+    if not handler.is_group:
+        handler.send(start_usage_not_in_group())
+    else:
+        options = OrderedDict()
+        options['New game'] = 'newgame'
+        options['Join game'] = 'player'
+        options['Show game status'] = 'showgame'
+        options['Show player'] = 'show'
+        options['Add item'] = 'add'
+        options['Update item'] = 'update'
+        options['Add list item'] = 'addlist'
+        options['Delete item'] = 'del'
+        options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
+        options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
+        options['Delete game'] = 'delgame'
+        handler.send('How can I help you?', options=options)
+        
 

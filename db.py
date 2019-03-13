@@ -22,6 +22,19 @@ def table_exists(db, table):
     else:
         return True
 
+class Group():
+    def __init__(self, gameid, groupid, groupname):
+        self.gameid = gameid
+        self.groupid = groupid
+        self.groupname = groupname
+
+class Player():
+    def __init__(self, gameid, playerid, role, playername):
+        self.gameid = gameid
+        self.playerid = playerid
+        self.role = role
+        self.playername = playername
+
 def init():
     db = open_connection()
     try:
@@ -93,6 +106,16 @@ def get_template_from_groupid(db, groupid):
         return None
     template = result[0]
     return template
+
+def get_group_from_playerid(db, playerid):
+    c = db.cursor()
+    query = c.execute('''SELECT Groups.gameid, groupid, groupname, playerid, role, playername FROM Groups LEFT JOIN Players ON Groups.gameid = Players.gameid WHERE playerid=?''', (playerid,))
+    result = query.fetchone()
+    if result is None:
+        return None, None
+    group = Group(result[0], result[1], result[2])
+    player = Player(result[0], result[3], result[4], result[5])
+    return group, player
     
 def get_player_role(db, userid, gameid):
     c = db.cursor()
@@ -269,11 +292,10 @@ def delete_item(db, gameid, playerid, container, key):
 def get_items(db, gameid, playerid):
     ret = {}
     c = db.cursor()
-    query = c.execute('''SELECT DISTINCT container FROM Contents WHERE gameid=? AND playerid=?''', (gameid, playerid,))
-    for container in query.fetchall():
-        inner = c.execute('''SELECT key, value FROM Contents WHERE gameid=? AND playerid=? AND container=?''', (gameid, playerid, container[0]))
-        my_list = {}
-        for item in inner:
-            my_list[item[0]] = item[1]
-        ret[container[0]] = my_list
-    return ret
+    contents = {}
+    query = c.execute('''SELECT container, key, value FROM Contents WHERE gameid=? AND playerid=?''', (gameid, playerid,))
+    for row in query.fetchall():
+        if row[0] not in contents:
+            contents[row[0]] = {}
+        contents[row[0]][row[1]] = row[2]
+    return contents
