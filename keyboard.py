@@ -94,11 +94,16 @@ class MessageHandler(telepot.helper.ChatHandler):
         if len(options) > 0:
             buttons = []
             for key, value in options.items():
-                buttons.append([InlineKeyboardButton(text=key, callback_data=value)])
+                if isinstance(value, dict):
+                    if 'url' in value:
+                        buttons.append([InlineKeyboardButton(text=key, url=value['url'])])
+                else:
+                    buttons.append([InlineKeyboardButton(text=key, callback_data=value)])
             keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
         
         #log('sending to chat id {}'.format(target))
         self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
+        #self.editor.editMessageText(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
 
     def on_callback_query(self, msg):
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')

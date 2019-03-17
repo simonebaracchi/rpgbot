@@ -12,14 +12,6 @@ def newgame_already_started_usage():
 Now invite some players, make them join with `/player <character name>`, check your characters with `/show`, adjust your character sheet with `/update`, and roll dices with `/roll`.
 For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot."""
 
-def start_usage_not_in_group():
-    return """Howdy, human.
-I am a character sheet bot for Fate RPG.
-To use my services, add me to a group, invite other players, and call me again to start a new game.
-Use the inline keyboard to navigate my character sheet functions, or use the shortcut `/roll` to roll dices.
-For a more complete list of commands, see https://github.com/simonebaracchi/rpgbot.
-
-Hope you have fun!"""
 
 def add_command(name):
     global all_commands
@@ -160,7 +152,7 @@ def need_role(role, errormessage):
 @need_gameid(allownotexisting=True, errormessage=newgame_already_started_usage())
 #@need_args(1, 'Please specify the game name like this: `/newgame <name>`.')
 @check_too_many_games
-@read_args('What should the game name be?', 'name')
+@read_args('How are we going to call the game?', 'name')
 def newgame(handler, name):
     if db.number_of_games(handler.dbc, handler.sender_id) > 10:
         handler.send('You exceeded the maximum number of games. Please close some first.')
@@ -354,8 +346,11 @@ def show(handler):
 @need_gameid(allowexisting=True, allownotexisting=True)
 def roll(handler):
     dbc = handler.dbc
-    gameid = handler.group.gameid
-    groupid = handler.group.groupid
+    gameid = None
+    groupid = None
+    if handler.group is not None:
+        gameid = handler.group.gameid
+        groupid = handler.group.groupid
     sender_id = handler.sender_id
     args = handler.args
     command = handler.command
@@ -414,6 +409,7 @@ def roll(handler):
             return
         masters = db.get_masters_for_game(dbc, gameid)
 
+        handler.send('{} secretly rolls {}...'.format(playername, description))
         try:
             handler.send('You rolled {} = {}.'.format(description, value), target=sender_id)
         except telepot.exception.TelegramError:
@@ -426,15 +422,44 @@ def roll(handler):
             except telepot.exception.TelegramError:
                 handler.send('{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
 
+
 @add_command('start')
 @need_gameid(allownotexisting=True, allowexisting=True)
 def start(handler):
-    if not handler.is_group:
-        handler.send(start_usage_not_in_group())
-    else:
+    if handler.is_group is False and handler.group is None:
+        # I am in a private chat, suggest to add me to a group
+        message = """Howdy, human.
+I am a character sheet bot for Fate RPG.
+To use my services, add me to a group, invite other players, and call me again to start a new game.
+Use the inline keyboard to navigate my character sheet functions, or use the shortcut `/roll` to roll dices.
+Visit the official site for more details.
+
+Hope you have fun!"""
         options = OrderedDict()
-        options['New game'] = 'newgame'
-        options['Join game'] = 'player'
+        options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
+        handler.send(message, options=options)
+    elif handler.is_group is True and handler.group is None:
+        # I am in a group,
+        gameid = db.get_game_from_group(handler.dbc, handler.chat_id)
+        if gameid is not None:
+            # caller is not in game, but a game is ongoing
+            options = OrderedDict()
+            options['Join game'] = 'player'
+            options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
+            handler.send('How can I help you?', options=options)
+        else:
+            # suggest to start a new game
+            message = """Howdy, earthlings.
+I am a character sheet bot for Fate RPG.
+How can I help you?"""
+            options = OrderedDict()
+            options['Start new game'] = 'newgame'
+            options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
+            options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
+            handler.send(message, options=options)
+    elif handler.is_group is False and handler.group is None:
+        # I am in a private chat with a player
+        options = OrderedDict()
         options['Show game status'] = 'showgame'
         options['Show player'] = 'show'
         options['Add item'] = 'add'
@@ -443,7 +468,31 @@ def start(handler):
         options['Delete item'] = 'del'
         options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
         options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
-        options['Delete game'] = 'delgame'
+        options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
+        handler.send('How can I help you?', options=options)
+    else:
+        # Game is started!
+        options = OrderedDict()
+        options['Show game status'] = 'showgame'
+        options['Show player'] = 'show'
+        options['Add item'] = 'add'
+        options['Update item'] = 'update'
+        options['Add list item'] = 'addlist'
+        options['Delete item'] = 'del'
+        options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
+        options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
+        options['More ...'] = 'more'
         handler.send('How can I help you?', options=options)
         
 
+@add_command('more')
+@need_group
+@need_gameid(allowexisting=True)
+def more(handler):
+    # More options when game is started...
+    options = OrderedDict()
+    options['Change player name'] = 'player'
+    #options['Leave game'] = 'leave'
+    options['Delete game'] = 'delgame'
+    options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
+    handler.send('How can I help you?', options=options)
