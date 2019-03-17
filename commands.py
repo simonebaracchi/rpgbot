@@ -128,14 +128,14 @@ def check_too_many_games(func):
         return func(handler)
     return wrapper 
 
-def need_gameid(mustbenone, errormessage=None):
+def need_gameid(allownotexisting=False, allowexisting=False, errormessage=None):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(handler):
             group, player = db.get_group_from_playerid(handler.dbc, handler.sender_id)
             handler.group = group
             handler.player = player
-            if mustbenone is True and group is not None or mustbenone is False and group is None:
+            if (allowexisting is False and group is not None) or (allownotexisting is False and group is None):
                 handler.send(errormessage)
                 return False
             return func(handler)
@@ -157,7 +157,7 @@ def need_role(role, errormessage):
 
 @add_command('newgame')
 @need_group
-@need_gameid(mustbenone=True, errormessage=newgame_already_started_usage())
+@need_gameid(allownotexisting=True, errormessage=newgame_already_started_usage())
 #@need_args(1, 'Please specify the game name like this: `/newgame <name>`.')
 @check_too_many_games
 @read_args('What should the game name be?', 'name')
@@ -176,14 +176,14 @@ def newgame(handler, name):
 
 @add_command('delgame')
 @need_group
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 @need_role(db.ROLE_MASTER, 'You need to be a game master to close a game.')
 def delgame(handler):
     db.del_game(handler.dbc, handler.group.gameid)
     handler.send('GG, humans.')
 
 @add_command('showgame')
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 def showgame(handler):
     gamename, groups, players = db.get_game_info(handler.dbc, handler.group.gameid)
     players_string = [x + (' (gm)' if (y == db.ROLE_MASTER) else '') for x,y in players.items()]
@@ -198,7 +198,7 @@ def showgame(handler):
 
 @add_command('player')
 @need_group
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 #@need_args(1, 'Please specify the player name like this: `/player <name>`.')
 @check_too_many_games
 @read_args('What is your name, adventurer?', 'name')
@@ -212,7 +212,7 @@ def player(handler, name):
         handler.send('You will now be known as {}.'.format(name))
 
 @add_command('add')
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 #@need_args(2, 'Use the format: /add <container> <key> [change].')
 @choose_container('In which container?', 'container', allownew=True, adding=True)
 @read_args('What item would you like to add?', 'key')
@@ -222,7 +222,7 @@ def add(handler, container, key, change):
     return add_or_update_item(handler, container, key, change, command)
 
 @add_command('update')
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 #@need_args(2, 'Use the format: /add <container> <key> [change].')
 @choose_container('In which container?', 'container', allownew=False, adding=False)
 @choose_item('Which item?', 'key')
@@ -264,7 +264,7 @@ def add_or_update_item(handler, container, key, change, command):
 
 
 @add_command('addlist')
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 #@need_args(2, 'Use the format: /addlist <container> <description>.')
 @choose_container('In which container?', 'container', allownew=True, adding=True)
 @read_args('What would you like to add?', 'description')
@@ -286,7 +286,7 @@ def addlist(handler, container, description):
     handler.send('Added "{}" to container {}.'.format(description, container))
 
 @add_command('del')
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 @choose_container('In which container?', 'container', allownew=False, adding=False)
 @choose_item('Which item?', 'key')
 def delitem(handler, container, key):
@@ -307,7 +307,7 @@ def delitem(handler, container, key):
         handler.send('Deleted {}/{} (was {}).'.format(container, key, oldvalue))
 
 @add_command('show')
-@need_gameid(mustbenone=False, errormessage='No game found.')
+@need_gameid(allowexisting=True, errormessage='No game found.')
 def show(handler):
     dbc = handler.dbc
     gameid = handler.group.gameid
@@ -351,7 +351,7 @@ def show(handler):
 @add_command('roll')
 @add_command('r')
 @add_command('gmroll')
-@need_gameid(mustbenone=None)
+@need_gameid(allowexisting=True, allownotexisting=True)
 def roll(handler):
     dbc = handler.dbc
     gameid = handler.group.gameid
@@ -427,6 +427,7 @@ def roll(handler):
                 handler.send('{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
 
 @add_command('start')
+@need_gameid(allownotexisting=True, allowexisting=True)
 def start(handler):
     if not handler.is_group:
         handler.send(start_usage_not_in_group())
