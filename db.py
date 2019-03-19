@@ -163,15 +163,21 @@ preferred_key_order = {'gen': ['highconcept', 'description', 'fatepoints', 'stre
 
 def add_default_items(db, userid, gameid, template):
     if template == 'fae':
-        update_item(db, gameid, userid, 'gen', 'highconcept', 'Set this to your high concept.', False)
         update_item(db, gameid, userid, 'gen', 'description', 'Describe your character in a few words.', False)
-        update_item(db, gameid, userid, 'gen', 'fatepoints', '2', False)
+        update_item(db, gameid, userid, 'gen', 'highconcept', 'Set this to your high concept.', False)
+        update_item(db, gameid, userid, 'gen', 'trouble', 'Your character\'s trouble.', False)
+        update_item(db, gameid, userid, 'gen', 'fatepoints', '3', False)
+        update_item(db, gameid, userid, 'gen', 'refresh', '3', False)
         update_item(db, gameid, userid, 'gen', 'stress2', 'Inactive', False)
         update_item(db, gameid, userid, 'gen', 'stress4', 'Inactive', False)
         update_item(db, gameid, userid, 'gen', 'stress6', 'Inactive', False)
-        update_item(db, gameid, userid, 'aspects', '1', 'Set this to your first aspect.', False)
-        update_item(db, gameid, userid, 'aspects', '2', 'Set this to your second aspect.', False)
         update_item(db, gameid, userid, 'stunts', '1', 'Set this to your first stunt.', False)
+        update_item(db, gameid, userid, 'approaches', 'careful', '0', False)
+        update_item(db, gameid, userid, 'approaches', 'clever', '0', False)
+        update_item(db, gameid, userid, 'approaches', 'flashy', '0', False)
+        update_item(db, gameid, userid, 'approaches', 'forceful', '0', False)
+        update_item(db, gameid, userid, 'approaches', 'quick', '0', False)
+        update_item(db, gameid, userid, 'approaches', 'sneaky', '0', False)
         
 
 def number_of_games(db, user):
