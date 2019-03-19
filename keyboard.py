@@ -22,6 +22,8 @@ class MessageHandler(telepot.helper.ChatHandler):
         self.is_group = None
         self.groupname = None
         self.command = None
+        self.args = None
+        self.message = None
         self.player = None # not automatically initialized
         self.group = None # not automatically initialized
         self.callback = None # string to be read requested
@@ -67,7 +69,6 @@ class MessageHandler(telepot.helper.ChatHandler):
 
         log_msg(msg)
 
-
         #is_admin = False
         #if sender_id in config.admins:
         #   is_admin = True
@@ -80,12 +81,16 @@ class MessageHandler(telepot.helper.ChatHandler):
     def read_answer(self, callback, argname, kwargs):
         self.callback = CallbackRequest(callback, argname, kwargs)
         
-    def burn_message(self):
-        # ideally here we should destroy the inline keyboard
+    def burn_message(self, chat_id, msg_id):
+        # destroy the inline keyboard
+        #self.bot.deleteMessage((self.chat_id, msg['message']['message_id']))
+        self.bot.editMessageText((chat_id, msg_id), 'Too late.')
         pass
 
     def send(self, msg, target=None, disablepreview=True, options={}):
+        send_to_default = False
         if target is None:
+            send_to_default = True
             target = self.chat_id
         if (msg == None or len(msg) == 0 or len(msg.split()) == 0) and len(options) == 0:
             msg = '(no message)'
@@ -102,15 +107,21 @@ class MessageHandler(telepot.helper.ChatHandler):
             keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
         
         #log('sending to chat id {}'.format(target))
-        self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
-        #self.editor.editMessageText(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
+        if send_to_default:
+            if self.message is None:
+                sent = self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
+                self.message = telepot.message_identifier(sent)
+            else:
+                self.bot.deleteMessage(self.message)
+                sent = self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
+                self.message = telepot.message_identifier(sent)
+        else:
+            self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
 
     def on_callback_query(self, msg):
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
         #self.bot.sendMessage(from_id, str(msg))
         #log('callback chat id {} from {}: {}'.format(self.chat_id, from_id, str(msg)))
-        if self.chat_id is None:
-            self.burn_message()
 
         log_callback(msg, self.callback)
 
@@ -122,13 +133,15 @@ class MessageHandler(telepot.helper.ChatHandler):
             callback.callback(self, **callback.kwargs)
             db.close_connection(self.dbc)
             return
-        #print('Callback Query:', query_id, from_id, query_data)
         if query_data in commands.all_commands:
             self.command = query_data
             self.dbc = db.open_connection()
             commands.all_commands[query_data](self)
             db.close_connection(self.dbc)
+            return
         #bot.answerCallbackQuery(query_id) #, text='Got it')
+        # Destroy message if we can't understand what it is. Probably an old message.
+        self.burn_message(self.chat_id, msg['message']['message_id'])
 
 
 def die():
