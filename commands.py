@@ -38,7 +38,7 @@ def read_args(string, argname):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(handler, **kwargs):
-            handler.send(string)
+            handler.send(string, allowedit=True)
             handler.read_answer(func, argname, kwargs)
         return wrapper 
     return decorator
@@ -67,19 +67,19 @@ def choose_container(string, argname, allownew, adding):
                     options[container] = container
             if allownew:
                 options['New container...'] = '__new__container__'
-                handler.send(string, options=options)
+                handler.send(string, options=options, allowedit=True)
                 kwargs['containercallback'] = func
                 kwargs['argname'] = argname
                 handler.read_answer(new_container_callback, 'newcontainer', kwargs)
             else:
-                handler.send(string, options=options)
+                handler.send(string, options=options, allowedit=True)
                 handler.read_answer(func, argname, kwargs)
         return wrapper 
     return decorator
 
 def new_container_callback(handler, newcontainer, argname, containercallback, **kwargs):
     if newcontainer == '__new__container__':
-        handler.send('How do you want to name the container?')
+        handler.send('How do you want to name the container?', allowedit=True)
         handler.read_answer(containercallback, argname, kwargs)
     else:
         kwargs[argname] = newcontainer
@@ -96,7 +96,7 @@ def choose_item(string, argname):
             options = OrderedDict()
             for key, value in items[container].items():
                 options['{} ({})'.format(key, value)] = key
-            handler.send(string, options=options)
+            handler.send(string, options=options, allowedit=True)
             kwargs['container'] = container
             handler.read_answer(func, argname, kwargs)
         return wrapper 
@@ -437,7 +437,7 @@ Visit the official site for more details.
 Hope you have fun!"""
         options = OrderedDict()
         options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
-        handler.send(message, options=options)
+        handler.send(message, options=options, allowedit=True)
     elif handler.is_group is True and handler.group is None:
         # I am in a group,
         gameid = db.get_game_from_group(handler.dbc, handler.chat_id)
@@ -446,7 +446,7 @@ Hope you have fun!"""
             options = OrderedDict()
             options['Join game'] = 'player'
             options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
-            handler.send('How can I help you?', options=options)
+            handler.send('How can I help you?', options=options, allowedit=True)
         else:
             # suggest to start a new game
             message = """Howdy, earthlings.
@@ -456,7 +456,7 @@ How can I help you?"""
             options['Start new game'] = 'newgame'
             options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
             options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
-            handler.send(message, options=options)
+            handler.send(message, options=options, allowedit=True)
     elif handler.is_group is False and handler.group is None:
         # I am in a private chat with a player
         options = OrderedDict()
@@ -469,7 +469,7 @@ How can I help you?"""
         options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
         options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
         options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
-        handler.send('How can I help you?', options=options)
+        handler.send('How can I help you?', options=options, allowedit=True)
     else:
         # Game is started!
         options = OrderedDict()
@@ -482,7 +482,7 @@ How can I help you?"""
         options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
         options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
         options['More ...'] = 'more'
-        handler.send('How can I help you?', options=options)
+        handler.send('How can I help you?', options=options, allowedit=True)
         
 
 @add_command('more')
@@ -495,4 +495,4 @@ def more(handler):
     #options['Leave game'] = 'leave'
     options['Delete game'] = 'delgame'
     options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
-    handler.send('How can I help you?', options=options)
+    handler.send('How can I help you?', options=options, allowedit=True)

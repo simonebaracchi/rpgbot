@@ -87,11 +87,7 @@ class MessageHandler(telepot.helper.ChatHandler):
         self.bot.editMessageText(msg_id, 'Too late.')
         pass
 
-    def send(self, msg, target=None, disablepreview=True, options={}):
-        send_to_default = False
-        if target is None:
-            send_to_default = True
-            target = self.chat_id
+    def send(self, msg, target=None, disablepreview=True, options={}, allowedit=False):
         if (msg == None or len(msg) == 0 or len(msg.split()) == 0) and len(options) == 0:
             msg = '(no message)'
 
@@ -107,14 +103,14 @@ class MessageHandler(telepot.helper.ChatHandler):
             keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
         
         #log('sending to chat id {}'.format(target))
-        if send_to_default:
-            if self.message is None:
-                sent = self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
+        if target is None:
+            if self.message is not None:
+                self.bot.deleteMessage(self.message)
+            sent = self.bot.sendMessage(self.chat_id, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
+            if allowedit:
                 self.message = telepot.message_identifier(sent)
             else:
-                self.bot.deleteMessage(self.message)
-                sent = self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
-                self.message = telepot.message_identifier(sent)
+                self.message = None
         else:
             self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
 
