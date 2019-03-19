@@ -158,6 +158,15 @@ def get_masters_for_game(db, gameid):
         ret.append(player[0])
     return ret
 
+def get_all_players_from_game(db, gameid):
+    c = db.cursor()
+    query = c.execute('''SELECT gameid, playerid, role, playername FROM Players WHERE gameid=?''', (gameid, ))
+    ret = []
+    for player in query:
+        p = Player(player[0], player[1], player[2], player[3])
+        ret.append(p)
+    return ret
+
 preferred_container_order = ['gen', 'aspects', 'stunts', 'skills', 'spells', 'inventory', 'rolls']
 preferred_key_order = {'gen': ['highconcept', 'description', 'fatepoints', 'stress2', 'stress4', 'stress6']}
 

@@ -77,6 +77,19 @@ def choose_container(string, argname, allownew, adding):
         return wrapper 
     return decorator
 
+def choose_another_player(string, argname):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(handler, **kwargs):
+            players = db.get_all_players_from_game(handler.dbc, handler.group.gameid)
+            options = OrderedDict()
+            for p in players:
+                options[p.playername] = p.playerid
+            handler.send(string, options=options, allowedit=True)
+            handler.read_answer(func, argname, kwargs)
+        return wrapper 
+    return decorator
+
 def new_container_callback(handler, newcontainer, argname, containercallback, **kwargs):
     if newcontainer == '__new__container__':
         handler.send('How do you want to name the container?', allowedit=True)
@@ -298,14 +311,11 @@ def delitem(handler, container, key):
     else:
         handler.send('Deleted {}/{} (was {}).'.format(container, key, oldvalue))
 
-@add_command('show')
-@need_gameid(allowexisting=True, errormessage='No game found.')
-def show(handler):
+def show_player(handler, playerid=None):
     dbc = handler.dbc
     gameid = handler.group.gameid
-    sender_id = handler.sender_id
-    items = db.get_items(dbc, gameid, sender_id)
-    playername = db.get_player_name(dbc, gameid, sender_id)
+    items = db.get_items(dbc, gameid, playerid)
+    playername = db.get_player_name(dbc, gameid, playerid)
     if playername is None:
         send(bot, chat_id, 'You are not in a game.')
         return
@@ -339,6 +349,17 @@ def show(handler):
         for key in items[container]:
             ret += '  - {} ({})\n'.format(key, items[container][key])
     handler.send(ret)
+
+@add_command('show')
+@need_gameid(allowexisting=True, errormessage='No game found.')
+def show(handler):
+    return show_player(handler, handler.sender_id)
+
+@add_command('showother')
+@need_gameid(allowexisting=True, errormessage='No game found.')
+@choose_another_player('Which player?', 'playerid')
+def showother(handler, playerid):
+    return show_player(handler, playerid)
 
 @add_command('roll')
 @add_command('r')
@@ -457,13 +478,14 @@ How can I help you?"""
             options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
             options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
             handler.send(message, options=options, allowedit=True)
-    elif handler.is_group is False and handler.group is None:
+    elif handler.is_group is False and handler.group is not None:
         # I am in a private chat with a player
         options = OrderedDict()
         subopts = OrderedDict()
         subopts['Show game status'] = 'showgame'
         subopts['Show player status'] = 'show'
         options['dummy'] = subopts
+        options['Show other player status'] = 'showother'
 
         subopts = OrderedDict()
         subopts['Add item'] = 'add'
@@ -477,7 +499,7 @@ How can I help you?"""
         options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
         handler.send('How can I help you?', options=options, allowedit=True)
     else:
-        # Game is started!
+        # Game is started in the group!
         options = OrderedDict()
         subopts = OrderedDict()
         subopts['Show game status'] = 'showgame'
@@ -503,6 +525,7 @@ How can I help you?"""
 def more(handler):
     # More options when game is started...
     options = OrderedDict()
+    options['Show other player status'] = 'showother'
     options['Change player name'] = 'player'
     #options['Leave game'] = 'leave'
     options['Delete game'] = 'delgame'
