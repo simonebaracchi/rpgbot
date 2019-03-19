@@ -37,6 +37,11 @@ class MessageHandler(telepot.helper.ChatHandler):
         if 'text' not in msg:
             # probably a sticker or something
             return
+
+        if self.callback and self.sender_id != msg['from']['id']:
+            # once in callback mode, ignore everyone else
+            return
+    
         text = msg['text']
         #self.chat_id = msg['chat']['id']
         self.sender_id = msg['from']['id']
@@ -124,10 +129,14 @@ class MessageHandler(telepot.helper.ChatHandler):
         #self.bot.sendMessage(from_id, str(msg))
         #log('callback chat id {} from {}: {}'.format(self.chat_id, from_id, str(msg)))
 
+        if self.callback and self.sender_id != from_id:
+            # once in callback mode, ignore everyone else
+            return
+
         if self.message is None:
             # probably bot restarted
             self.message = (self.chat_id, msg['message']['message_id'])
-
+    
         log_callback(msg, self.callback)
 
         if self.callback:
