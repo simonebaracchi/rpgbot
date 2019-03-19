@@ -460,12 +460,18 @@ How can I help you?"""
     elif handler.is_group is False and handler.group is None:
         # I am in a private chat with a player
         options = OrderedDict()
-        options['Show game status'] = 'showgame'
-        options['Show player'] = 'show'
-        options['Add item'] = 'add'
-        options['Update item'] = 'update'
-        options['Add list item'] = 'addlist'
-        options['Delete item'] = 'del'
+        subopts = OrderedDict()
+        subopts['Show game status'] = 'showgame'
+        subopts['Show player status'] = 'show'
+        options['dummy'] = subopts
+
+        subopts = OrderedDict()
+        subopts['Add item'] = 'add'
+        subopts['Update item'] = 'update'
+        subopts['Add list item'] = 'addlist'
+        subopts['Delete item'] = 'del'
+        options['dummy2'] = subopts
+
         options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
         options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
         options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
@@ -473,12 +479,18 @@ How can I help you?"""
     else:
         # Game is started!
         options = OrderedDict()
-        options['Show game status'] = 'showgame'
-        options['Show player'] = 'show'
-        options['Add item'] = 'add'
-        options['Update item'] = 'update'
-        options['Add list item'] = 'addlist'
-        options['Delete item'] = 'del'
+        subopts = OrderedDict()
+        subopts['Show game status'] = 'showgame'
+        subopts['Show player status'] = 'show'
+        options['dummy'] = subopts
+
+        subopts = OrderedDict()
+        subopts['Add item'] = 'add'
+        subopts['Update item'] = 'update'
+        subopts['Add list item'] = 'addlist'
+        subopts['Delete item'] = 'del'
+        options['dummy2'] = subopts
+
         options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
         options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
         options['More ...'] = 'more'
