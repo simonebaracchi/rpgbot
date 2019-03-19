@@ -352,7 +352,7 @@ def roll(handler):
         gameid = handler.group.gameid
         groupid = handler.group.groupid
     sender_id = handler.sender_id
-    args = handler.args
+    args = handler.args if handler.args is not None else []
     command = handler.command
     
     if len(args) < 2:
