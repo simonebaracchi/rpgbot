@@ -81,10 +81,10 @@ class MessageHandler(telepot.helper.ChatHandler):
     def read_answer(self, callback, argname, kwargs):
         self.callback = CallbackRequest(callback, argname, kwargs)
         
-    def burn_message(self, chat_id, msg_id):
+    def burn_message(self, msg_id):
         # destroy the inline keyboard
         #self.bot.deleteMessage((self.chat_id, msg['message']['message_id']))
-        self.bot.editMessageText((chat_id, msg_id), 'Too late.')
+        self.bot.editMessageText(msg_id, 'Too late.')
         pass
 
     def send(self, msg, target=None, disablepreview=True, options={}):
@@ -123,6 +123,10 @@ class MessageHandler(telepot.helper.ChatHandler):
         #self.bot.sendMessage(from_id, str(msg))
         #log('callback chat id {} from {}: {}'.format(self.chat_id, from_id, str(msg)))
 
+        if self.message is None:
+            # probably bot restarted
+            self.message = (self.chat_id, msg['message']['message_id'])
+
         log_callback(msg, self.callback)
 
         if self.callback:
@@ -141,8 +145,13 @@ class MessageHandler(telepot.helper.ChatHandler):
             return
         #bot.answerCallbackQuery(query_id) #, text='Got it')
         # Destroy message if we can't understand what it is. Probably an old message.
-        self.burn_message(self.chat_id, msg['message']['message_id'])
+        self.burn_message(self.message)
 
+    def on_close(self, ex):
+        try:
+            self.burn_message(self.message)
+        except:
+            pass
 
 def die():
     os.kill(os.getpid(), signal.SIGINT)

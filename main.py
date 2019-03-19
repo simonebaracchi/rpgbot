@@ -26,7 +26,7 @@ print('Entering message loop.')
 
 bot = telepot.DelegatorBot(config.bot_token, [
     pave_event_space()(
-        [per_chat_id(), per_callback_query_chat_id()], create_open, keyboard.MessageHandler, timeout=300, include_callback_query=True),
+        [per_chat_id(), per_callback_query_chat_id()], create_open, keyboard.MessageHandler, timeout=120, include_callback_query=True),
 ])
 MessageLoop(bot).run_as_thread()
 
