@@ -93,14 +93,21 @@ Delete an item (or another a character sheet entry).
 ## Run in docker
 
 Build docker container:
-
 ```
  docker build . -t rpgbot
 ```
 
 
 Run container:
+```
+ docker run -t -v /your-preferred-path/data:/data -e RPGBOT_TOKEN=<Telegram-token> -e RPGBOT_ADMINS=<my-id,another-id> rpgbot
+```
+
+## Run without docker
+
+Configure `custom_config.py` manually or through `install.py` and then run:
 
 ```
- docker run -t -v /your-preferred-path/data:/data -e RPGBOT_TOKEN=Your:Token -e RPGBOT_ADMINS=my-id,another-id rpgbot
+# python3 main.py
 ```
+

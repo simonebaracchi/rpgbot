@@ -17,9 +17,9 @@ rm tempconfig.py
 echo "Enter your Telegram ID. This will be the default admin user."
 read -r SENDER_ID
 
-cp config.example.py config.py
-sed -i s"/MY-TG-BOT-TOKEN/$TG_BOT_TOKEN/" config.py
-sed -i s"/MY-SENDER-ID-LIST/$SENDER_ID/" config.py
+cp custom_config.example.py custom_config.py
+sed -i s"/MY-TG-BOT-TOKEN/$TG_BOT_TOKEN/" custom_config.py
+sed -i s"/MY-SENDER-ID-LIST/$SENDER_ID/" custom_config.py
 
 printf "\n\n--------------------------------\n\n"
 echo "Do you want to configure the daemon with systemctl? (y/n)"

@@ -105,3 +105,4 @@ venv.bak/
 
 games.db
 *.swp
+custom_config.py
