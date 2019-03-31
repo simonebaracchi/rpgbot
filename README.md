@@ -1,3 +1,4 @@
+
 # rpgbot
 RPG helper bot for Telegram. Manages character sheets, dice rolls, and game state.
 
@@ -88,3 +89,18 @@ Delete an item (or another a character sheet entry).
 `/del inventory health-potion` (deletes all items named "health-potion" from your inventory)
 
 `/showgame` (shows the game state, such as, its name, the players, the gm, the room aspects)
+
+## Run in docker
+
+Build docker container:
+
+```
+ docker build . -t rpgbot
+```
+
+
+Run container:
+
+```
+ docker run -t -v /your-preferred-path/data:/data -e RPGBOT_TOKEN=Your:Token -e RPGBOT_ADMINS=my-id,another-id rpgbot
+```

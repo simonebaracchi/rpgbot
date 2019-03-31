@@ -1,6 +1,7 @@
 import sqlite3
+import config
 
-db_name = 'games.db'
+db_name = config.sqlite_path
 db_version = 1
 ROLE_PLAYER = 10
 ROLE_MASTER = 20
