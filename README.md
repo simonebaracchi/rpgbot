@@ -4,9 +4,18 @@ RPG helper bot for Telegram. Manages character sheets, dice rolls, and game stat
 
 **Want to try it?** Message @character_sheet_bot on Telegram.
 
-I wrote this as a very generic tool for pen-and-paper RPGs, but via Telegram. Character sheets are fully custom and are structured as "container - key - value" data. It is up to you what your character sheet is made up of, except for a "template" sheet (based on Fate Accelerated RPG) that is automatically generated for new players, but it can be fully customized afterwards.
+This is a very generic tool for pen-and-paper RPGs, but via Telegram. Character sheets are structured as a "key - value" data store (actually, they can group keys together, more like a "container - key - value" data store) and are fully customizable from the Telegram interface for any purpose. It is up to you what your character sheet is made up of. A "template" sheet (based on Fate Accelerated RPG) is inluded and is automatically generated for new players (but it can be changed afterwards).
 
-Commands:
+Just tell `/start` to the bot to enter its menu. Optionally, you can issue commands without going through the buttons; see the `Commands` section below.
+
+## Features
+
+  * Fully customizable character sheets
+  * Track global game state
+  * Dice rolling (including secret rolling and saved rolls)
+  * Game data accessible through both group and private messages
+
+## Commands
 
   - `/newgame <name>`
 
@@ -60,7 +69,7 @@ Similar to /add, but does not create an object if it does not already exist.
 
 Delete an item (or another a character sheet entry). 
 
-### Examples
+### Command examples
 
 `/newgame The tales of Github` (starts a new game with this name; the user starting the game becomes the game master)
 
