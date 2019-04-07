@@ -4,7 +4,7 @@ RPG helper bot for Telegram. Manages character sheets, dice rolls, and game stat
 
 **Want to try it?** Message @character_sheet_bot on Telegram.
 
-This is a very generic tool for pen-and-paper RPGs, but via Telegram. Character sheets are structured as a "key - value" data store (actually, they can group keys together, more like a "container - key - value" data store) and are fully customizable from the Telegram interface for any purpose. It is up to you what your character sheet is made up of. A "template" sheet (based on Fate Accelerated RPG) is inluded and is automatically generated for new players (but it can be changed afterwards).
+This is a very generic tool for pen-and-paper RPGs, but via Telegram. Character sheets are structured as a "key - value" data store (actually, they can group keys together, more like a "container - key - value" data store) and are fully customizable from the Telegram interface for any purpose. It is up to you what your character sheet is made up of. A "template" sheet (based on Fate Accelerated RPG) is included and is automatically generated for new players (but it can be changed afterwards).
 
 Just tell `/start` to the bot to enter its menu. Optionally, you can issue commands without going through the buttons; see the `Commands` section below.
 
@@ -14,6 +14,8 @@ Just tell `/start` to the bot to enter its menu. Optionally, you can issue comma
   * Track global game state
   * Dice rolling (including secret rolling and saved rolls)
   * Game data accessible through both group and private messages
+  * Uses both Telegram's inline keyboard and CLI interface
+  * Dockerized
 
 ## Commands
 
