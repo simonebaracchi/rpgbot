@@ -188,6 +188,17 @@ def add_default_items(db, userid, gameid, template):
         update_item(db, gameid, userid, 'approaches', 'forceful', '0', False)
         update_item(db, gameid, userid, 'approaches', 'quick', '0', False)
         update_item(db, gameid, userid, 'approaches', 'sneaky', '0', False)
+    elif template == 'dnd':
+        update_item(db, gameid, userid, 'gen', 'class', 'Your class.', False)
+        update_item(db, gameid, userid, 'gen', 'race', 'Your race.', False)
+        update_item(db, gameid, userid, 'gen', 'alignment', 'Your alignment.', False)
+        update_item(db, gameid, userid, 'gen', 'level', '1', False)
+        update_item(db, gameid, userid, 'attributes', 'strength', '14', False)
+        update_item(db, gameid, userid, 'attributes', 'dexterity', '14', False)
+        update_item(db, gameid, userid, 'attributes', 'constitution', '14', False)
+        update_item(db, gameid, userid, 'attributes', 'intelligence', '14', False)
+        update_item(db, gameid, userid, 'attributes', 'wisdom', '14', False)
+        update_item(db, gameid, userid, 'attributes', 'charisma', '14', False)
         
 
 def number_of_games(db, user):

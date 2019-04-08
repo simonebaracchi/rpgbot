@@ -166,16 +166,14 @@ def need_role(role, errormessage):
 #@need_args(1, 'Please specify the game name like this: `/newgame <name>`.')
 @check_too_many_games
 @read_args('How are we going to call the game?', 'name')
-def newgame(handler, name):
-    if db.number_of_games(handler.dbc, handler.sender_id) > 10:
-        handler.send('You exceeded the maximum number of games. Please close some first.')
-        return False
-    gameid = db.new_game(handler.dbc, handler.sender_id, handler.username, name, handler.chat_id, handler.groupname, 'fae')
+@choose_template('Please choose a game template. This will only affect the default character sheets and dices.', 'template')
+def newgame(handler, name, template):
+    gameid = db.new_game(handler.dbc, handler.sender_id, handler.username, name, handler.chat_id, handler.groupname, template)
     if gameid is None:
         handler.send(newgame_already_started_usage())
         return False
 
-    db.add_default_items(handler.dbc, handler.sender_id, gameid, 'fae')
+    db.add_default_items(handler.dbc, handler.sender_id, gameid, template)
     handler.send('New game created: {}.'.format(name))
 
 
