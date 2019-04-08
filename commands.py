@@ -115,6 +115,18 @@ def choose_item(string, argname):
         return wrapper 
     return decorator
 
+def choose_template(string, argname):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(handler, **kwargs):
+            options = OrderedDict()
+            for key, value in db.game_templates.items():
+                options[value] = key
+            handler.send(string, options=options, allowedit=True)
+            handler.read_answer(func, argname, kwargs)
+        return wrapper 
+    return decorator
+
 def need_group(func):
     @functools.wraps(func)
     def wrapper(handler):
@@ -188,9 +200,9 @@ def delgame(handler):
 @add_command('showgame')
 @need_gameid(allowexisting=True, errormessage='No game found.')
 def showgame(handler):
-    gamename, groups, players = db.get_game_info(handler.dbc, handler.group.gameid)
+    gamename, template, groups, players = db.get_game_info(handler.dbc, handler.group.gameid)
     players_string = [x + (' (gm)' if (y == db.ROLE_MASTER) else '') for x,y in players.items()]
-    ret = '{}\nGroups: {}\nPlayers: {}'.format(gamename, ', '.join(groups), ', '.join(players_string))
+    ret = '{} ({})\nGroups: {}\nPlayers: {}'.format(gamename, db.game_templates[template], ', '.join(groups), ', '.join(players_string))
 
     items = db.get_items(handler.dbc, handler.group.gameid, handler.chat_id)
     if db.room_container in items:

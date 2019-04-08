@@ -1,11 +1,13 @@
 import sqlite3
 import config
+from collections import OrderedDict
 
 db_name = config.db_file
 db_version = 1
 ROLE_PLAYER = 10
 ROLE_MASTER = 20
-game_templates = ['fae']
+game_templates = OrderedDict([('fae', 'Fate Accelerated RPG'),
+                              ('dnd', 'Dungeons & Dragons')])
 room_container = 'room'
 rolls_container = 'rolls'
 
@@ -217,9 +219,10 @@ def get_game_from_group(db, groupid):
 
 def get_game_info(db, gameid):
     c = db.cursor()
-    query = c.execute('''SELECT gamename FROM Games WHERE gameid=?''', (gameid,))
+    query = c.execute('''SELECT gamename, template FROM Games WHERE gameid=?''', (gameid,))
     result = query.fetchone()
     gamename = result[0]
+    template = result[1]
     query = c.execute('''SELECT groupname FROM Groups WHERE gameid=?''', (gameid,))
     groups = []
     for group in query:
@@ -228,7 +231,7 @@ def get_game_info(db, gameid):
     players = {}
     for player in query:
         players[player[0]] = player[1]
-    return gamename, groups, players
+    return gamename, template, groups, players
 
 def number_of_items(db, gameid, playerid):
     c = db.cursor()
