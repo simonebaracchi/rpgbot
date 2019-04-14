@@ -1,12 +1,39 @@
 
 # rpgbot
-RPG helper bot for Telegram. Manages character sheets, dice rolls, and game state.
+
+## Short description
+
+It's a RPG helper bot for Telegram. Manages character sheets, dice rolls, and game state.
 
 **Want to try it?** Message @character_sheet_bot on Telegram.
 
-This is a very generic tool for pen-and-paper RPGs, but via Telegram. Character sheets are structured as a "key - value" data store (actually, they can group keys together, more like a "container - key - value" data store) and are fully customizable from the Telegram interface for any purpose. It is up to you what your character sheet is made up of. Some "template" sheets are included and automatically generated for new players (currently limited to FateRPG and D&D, but they can be changed and customized after game creation).
+## Longer description
 
-Just tell `/start` to the bot to enter its menu. Optionally, you can issue commands without going through the buttons; see the `Commands` section below.
+This is a very generic tool for playing pen-and-paper RPGs, but via Telegram. It lets you keep track of the game state by storing various info about the game. It is a tool rather than a game; you still need a game master to play.
+
+Why Telegram? There are some tools out there to play by voice (e.g. roll20, voice chats) or by forum (e.g. forums), but not many tools to play by chat. Telegram is very mobile-friendly, more popular than other chats that allow scripting, it keeps history (unlike IRC), allows message editing and deleting, rich contents, in a nutshell it is a good candidate for the task.
+
+### Using the bot
+
+  - Create a Telegram group. Add the bot to the group. Invite more players in the group. 
+  - Start a new game through the bot interface ("command" icon, or issuing the "/start" command). The user that starts the game becomes the game master.
+  - Choose a template for your game; this will affect the default character sheet and the default dice format (4dF for FATE, 1d20 for D&D).
+  - Let other players join the game by using the bot interface.
+  - Adjust your character sheet as needed. (This can be done through private chats.)
+  - (Optional) Have other players send a private message to the bot; this will allow the bot to message back and perform secret dice rolls.
+  - Play the game! The bot can assist in rolling dices, and tracking situational aspects.
+
+### Using character sheets
+
+The character sheet is organized in "containers". For example, skills, aspects, stunts, the inventory, saved rolls, etc are all containers. Each container contains items, structured as a "key - value" data store. If you prefer to only keep a list of items instead of a key-value pair (e.g. useful for listing stunts) a command to add items as lists is provided.
+
+Both items and containers are fully customizable from the Telegram interface for any purpose. It is up to you what your character sheet is made up of. 
+
+There are two "special" containers:
+  - the "rolls" container: this is used to store saved rolls, which are callable with the `/roll <name>` command.
+  - the "room" container: its contents are shared across all players and visibile in the global game state.
+
+Some "template" sheets are included and automatically generated for new players (currently limited to FateRPG and D&D). This does not restrict you from rewriting them.
 
 ## Features
 
@@ -18,6 +45,8 @@ Just tell `/start` to the bot to enter its menu. Optionally, you can issue comma
   * Dockerized
 
 ## Commands
+
+All commands are reachable through the menu, but optionally, you can issue them manually using this format:
 
   - `/newgame <name>`
 
@@ -101,7 +130,11 @@ Delete an item (or another a character sheet entry).
 
 `/showgame` (shows the game state, such as, its name, the players, the gm, the room aspects)
 
-## Run in docker
+## Running the bot
+
+You can message @character_sheet_bot on Telegram, but if you want to run your own, follow these instructions.
+
+### Run in docker
 
 Build docker container:
 ```
@@ -114,7 +147,7 @@ Run container:
  docker run -t -v /your-preferred-path/data:/data -e RPGBOT_TOKEN=<Telegram-token> -e RPGBOT_ADMINS=<my-id,another-id> rpgbot
 ```
 
-## Run without docker
+### Run without docker
 
 Configure `custom_config.py` manually or through `install.py` and then run:
 
