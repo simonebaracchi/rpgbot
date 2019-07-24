@@ -149,7 +149,11 @@ def need_gameid(allownotexisting=False, allowexisting=False, errormessage=None):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(handler):
-            group, player = db.get_group_from_playerid(handler.dbc, handler.sender_id)
+            group = handler.group
+            player = None
+            if group is None:
+                group, player = db.get_group_from_playerid(handler.dbc, handler.sender_id)
+            
             handler.group = group
             handler.player = player
             if (allowexisting is False and group is not None) or (allownotexisting is False and group is None):
@@ -158,6 +162,15 @@ def need_gameid(allownotexisting=False, allowexisting=False, errormessage=None):
             return func(handler)
         return wrapper 
     return decorator 
+
+def get_default_group(func):
+    @functools.wraps(func)
+    def wrapper(handler):
+        if handler.is_group is True and handler.group is None:
+            # Not in a game
+            handler.group = db.get_group_from_groupid(handler.dbc, handler.chat_id)
+        return func(handler)
+    return wrapper 
 
 def need_role(role, errormessage):
     def decorator(func):
@@ -213,14 +226,15 @@ def showgame(handler):
 
 @add_command('player')
 @need_group
-@need_gameid(allowexisting=True, errormessage='No game found.')
+@get_default_group
+@need_gameid(allowexisting=True, allownotexisting=True, errormessage='No game found.')
 #@need_args(1, 'Please specify the player name like this: `/player <name>`.')
 @check_too_many_games
 @read_args('What is your name, adventurer?', 'name')
 def player(handler, name):
     new_player_added = db.add_player(handler.dbc, handler.sender_id, name, handler.group.gameid, db.ROLE_PLAYER)
     if new_player_added:
-        template = db.get_template_from_gameid(handler.dbc, handler.gameid)
+        template = db.get_template_from_gameid(handler.dbc, handler.group.gameid)
         db.add_default_items(handler.dbc, handler.sender_id, handler.group.gameid, template)
         handler.send('Welcome, {}.'.format(name))
     else:
@@ -327,7 +341,7 @@ def show_player(handler, playerid=None):
     items = db.get_items(dbc, gameid, playerid)
     playername = db.get_player_name(dbc, gameid, playerid)
     if playername is None:
-        send(bot, chat_id, 'You are not in a game.')
+        handler.send('You are not in a game.')
         return
     ret = ''
     ret += 'Character sheet for {}:\n'.format(playername)

@@ -119,6 +119,15 @@ def get_group_from_playerid(db, playerid):
     group = Group(result[0], result[1], result[2])
     player = Player(result[0], result[3], result[4], result[5])
     return group, player
+
+def get_group_from_groupid(db, groupid):
+    c = db.cursor()
+    query = c.execute('''SELECT gameid, groupid, groupname FROM Groups WHERE groupid=?''', (groupid,))
+    result = query.fetchone()
+    if result is None:
+        return None
+    group = Group(result[0], result[1], result[2])
+    return group
     
 def get_player_role(db, userid, gameid):
     c = db.cursor()
