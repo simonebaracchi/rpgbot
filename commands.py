@@ -520,7 +520,12 @@ How can I help you?"""
 
         options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
         options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
-        options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
+
+        subopts = OrderedDict()
+        subopts['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
+        subopts['Cancel'] = 'cancel'
+        options['dummy3'] = subopts
+
         handler.send('How can I help you?', options=options, allowedit=True)
     else:
         # Game is started in the group!

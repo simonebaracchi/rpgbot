@@ -106,7 +106,10 @@ class MessageHandler(telepot.helper.ChatHandler):
                     else:
                         sublist = []
                         for key, subvalue in value.items():
-                            sublist.append(InlineKeyboardButton(text=key, callback_data=subvalue))
+                            if isinstance(subvalue, dict) and 'url' in subvalue:
+                                sublist.append(InlineKeyboardButton(text=key, url=subvalue['url']))
+                            else:
+                                sublist.append(InlineKeyboardButton(text=key, callback_data=subvalue))
                         buttons.append(sublist)
                 else:
                     buttons.append([InlineKeyboardButton(text=key, callback_data=value)])
