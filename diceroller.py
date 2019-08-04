@@ -24,6 +24,8 @@ dF+3
 4df-1
 df
 df+3
+4dF +1
+0dF    +0
 
 these other should be rejected:
 8d10-
@@ -49,7 +51,7 @@ def roll(dice):
 
     ret = 0
     string = ''
-    m = re.search('^([0-9]+)?d([0-9]+|[Ff])(?:([\+\-])([0-9]+))?$', dice)
+    m = re.search('^([0-9]+)?d([0-9]+|[Ff])\s*(?:([\+\-])([0-9]+))?$', dice)
     if m is not None:
         # DnD dice
         dices = m.group(1)
