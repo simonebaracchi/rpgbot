@@ -370,7 +370,7 @@ def show_player(handler, playerid=None):
     # print everything in remaining containers
     for container in items:
         ret += container + ':\n'
-        for key in items[container]:
+        for key in sorted(items[container]):
             ret += '  - {} ({})\n'.format(key, items[container][key])
     handler.send(ret)
 

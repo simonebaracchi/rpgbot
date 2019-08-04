@@ -180,7 +180,7 @@ def get_all_players_from_game(db, gameid):
     return ret
 
 preferred_container_order = ['gen', 'aspects', 'stunts', 'skills', 'spells', 'inventory', 'rolls']
-preferred_key_order = {'gen': ['highconcept', 'description', 'fatepoints', 'stress2', 'stress4', 'stress6']}
+preferred_key_order = {'gen': ['highconcept', 'trouble', 'description', 'fatepoints', 'stress2', 'stress4', 'stress6']}
 
 def add_default_items(db, userid, gameid, template):
     if template == 'fae':
