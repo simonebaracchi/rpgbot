@@ -44,13 +44,17 @@ class InvalidFormat(Exception):
 class TooManyDices(Exception):
     pass
 
+"""
+Returns:
+the dice description (e.g. 4dF+3); the actual rolled value (e.g. 6); the outcome description (e.g. 3+4+2+4)
+"""
 def roll(dice):
     """
     dice - a dice string, like 2d10, 6dF, 1d2+1, and so on
     """
 
     ret = 0
-    string = ''
+    outcome = ''
     m = re.search('^([0-9]+)?d([0-9]+|[Ff])\s*(?:([\+\-])([0-9]+))?$', dice)
     if m is not None:
         # DnD dice
@@ -107,8 +111,18 @@ def roll(dice):
     if bonus is not None:
         try:
             bonus = int(bonus)
+            if bonus == 0:
+                bonus = None
+                bonustype = None
+                bonus_mult = None
         except:
             raise InvalidFormat
+
+    dice_description = ''
+    if bonustype is None:
+        dice_description = '{}d{}'.format(dices_int, sides)
+    else:
+        dice_description = '{}d{}{}{}'.format(dices_int, sides, bonustype, bonus)
         
     # roll dice
     if sides == 'F':
@@ -117,11 +131,11 @@ def roll(dice):
             value = random.randint(-1, 1)
             ret += value;
             if value == -1:
-                string += '➖'
+                outcome += '➖'
             if value == 0:
-                string += '〇'
+                outcome += '〇'
             if value == 1:
-                string += '➕'
+                outcome += '➕'
     else:
         # DnD dice
         lista = []
@@ -129,11 +143,11 @@ def roll(dice):
             value = random.randint(1, sides_int);
             ret += value
             lista.append(str(value))
-        string = '+'.join(lista)
+        outcome = '+'.join(lista)
 
     if bonus_mult is not None and bonus is not None:
         ret += bonus_mult * bonus
-        string += '(' + bonustype + str(bonus) + ')'
+        outcome += '(' + bonustype + str(bonus) + ')'
 
-    return ret, string
+    return dice_description, ret, outcome
 

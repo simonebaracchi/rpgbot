@@ -391,6 +391,7 @@ def showother(handler, playerid):
 @need_gameid(allowexisting=True, allownotexisting=True)
 def roll(handler):
     dbc = handler.dbc
+    username = handler.username
     gameid = None
     groupid = None
     if handler.group is not None:
@@ -411,11 +412,12 @@ def roll(handler):
         dice = args[1].strip()
 
     value = 0
+    outcome = ''
     description = ''
     
     invalid_format = False
     try:
-        value, description = diceroller.roll(dice)
+        description, value, outcome = diceroller.roll(dice)
     except (diceroller.InvalidFormat):
         invalid_format = True
     except (diceroller.TooManyDices):
@@ -431,7 +433,7 @@ def roll(handler):
             invalid_format = False
             dice = saved_roll
             try:
-                value, description = diceroller.roll(dice)
+                description, value, outcome = diceroller.roll(dice)
             except (diceroller.InvalidFormat):
                 invalid_format = True
             except (diceroller.TooManyDices):
@@ -443,7 +445,7 @@ def roll(handler):
         return
 
     if command == 'roll' or command == 'r':
-        handler.send('Rolled {} = {}.'.format(description, value))
+        handler.send('Rolled {} = {}.'.format(outcome, value))
     elif command == 'gmroll':
         if gameid is None:
             handler.send('You are not in a game.')
@@ -456,14 +458,14 @@ def roll(handler):
 
         handler.send('{} secretly rolls {}...'.format(playername, description))
         try:
-            handler.send('You rolled {} = {}.'.format(description, value), target=sender_id)
+            handler.send('You rolled {} = {}.'.format(outcome, value), target=sender_id)
         except telepot.exception.TelegramError:
             handler.send('{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
         for master in masters:
             if sender_id == master:
                 continue
             try:
-                handler.send('{} ({}) rolled {} = {}.'.format(playername, username, description, value), target=master)
+                handler.send('{} ({}) rolled {} = {}.'.format(playername, username, outcome, value), target=master)
             except telepot.exception.TelegramError:
                 handler.send('{}, I couldn\'t send you the roll results. Please send me a private message to allow me sending future rolls.'.format(username))
 
