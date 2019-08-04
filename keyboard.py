@@ -184,7 +184,9 @@ def log_callback(msg, callback):
 
 def log_msg(msg):
     chat_name = ''
-    username = get_value_from(msg['from'], ['username', 'first_name', 'id'], 'unknown-user-id')
+    username = ''
+    username = get_value_from(msg['from'], ['username', 'first_name'], 'unknown-user-id')
+    username = '{}[{}]'.format(username, msg['from']['id'])
     text = msg['text']
     if 'title' in msg['chat']:
         chat_name = '{} ({})'.format(msg['chat']['title'], username)
