@@ -108,7 +108,7 @@ Delete an item (or another a character sheet entry).
 
 `/show` (check your character sheet contents)
 
-`/update gen highconcept He is the ultimate keeper of the Source.` (changes the high concept in your character sheet)
+`/update aspects highconcept He is the ultimate keeper of the Source.` (changes the high concept in your character sheet)
 
 `/add inventory short-sword` (add an item named "short-sword" to the container "inventory" with a default value of 1)
 
@@ -120,9 +120,9 @@ Delete an item (or another a character sheet entry).
 
 `/update inventory coins +100` (adds 100 coins to your inventory; will fail if you don't have an item by that name already)
 
-`/update gen fatepoints` (increases your fatepoint by 1)
+`/update general fatepoints` (increases your fatepoint by 1)
 
-`/update gen fatepoints -1` (decreases your fatepoint by 1)
+`/update general fatepoints -1` (decreases your fatepoint by 1)
 
 `/addlist room Everything is on fire!` (add an item on the room instead of yourself; can be seen with /showgame)
 

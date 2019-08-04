@@ -11,6 +11,10 @@ game_templates = OrderedDict([('fae', 'Fate Accelerated RPG'),
 room_container = 'room'
 rolls_container = 'rolls'
 
+preferred_container_order = ['general', 'aspects', 'stunts', 'skills', 'spells', 'inventory', 'rolls']
+preferred_key_order = {'general': ['description', 'fatepoints', 'stress2', 'stress4', 'stress6'], 'aspects': ['highconcept', 'trouble']}
+
+
 def open_connection():
     return sqlite3.connect(db_name)
 def close_connection(db):
@@ -179,20 +183,18 @@ def get_all_players_from_game(db, gameid):
         ret.append(p)
     return ret
 
-preferred_container_order = ['gen', 'aspects', 'stunts', 'skills', 'spells', 'inventory', 'rolls']
-preferred_key_order = {'gen': ['highconcept', 'trouble', 'description', 'fatepoints', 'stress2', 'stress4', 'stress6']}
-
 def add_default_items(db, userid, gameid, template):
     if template == 'fae':
-        update_item(db, gameid, userid, 'gen', 'description', 'Describe your character in a few words.', False)
-        update_item(db, gameid, userid, 'gen', 'highconcept', 'Set this to your high concept.', False)
-        update_item(db, gameid, userid, 'gen', 'trouble', 'Your character\'s trouble.', False)
-        update_item(db, gameid, userid, 'gen', 'fatepoints', '3', False)
-        update_item(db, gameid, userid, 'gen', 'refresh', '3', False)
-        update_item(db, gameid, userid, 'gen', 'stress2', 'Inactive', False)
-        update_item(db, gameid, userid, 'gen', 'stress4', 'Inactive', False)
-        update_item(db, gameid, userid, 'gen', 'stress6', 'Inactive', False)
+        update_item(db, gameid, userid, 'general', 'description', 'Describe your character in a few words.', False)
+        update_item(db, gameid, userid, 'general', 'fatepoints', '3', False)
+        update_item(db, gameid, userid, 'general', 'refresh', '3', False)
+        update_item(db, gameid, userid, 'general', 'stress2', 'Inactive', False)
+        update_item(db, gameid, userid, 'general', 'stress4', 'Inactive', False)
+        update_item(db, gameid, userid, 'general', 'stress6', 'Inactive', False)
         update_item(db, gameid, userid, 'stunts', '1', 'Set this to your first stunt.', False)
+        update_item(db, gameid, userid, 'aspects', 'highconcept', 'Set this to your high concept.', False)
+        update_item(db, gameid, userid, 'aspects', 'trouble', 'Your character\'s trouble.', False)
+        update_item(db, gameid, userid, 'aspects', '1', 'Set this to your first aspect.', False)
         update_item(db, gameid, userid, 'approaches', 'careful', '0', False)
         update_item(db, gameid, userid, 'approaches', 'clever', '0', False)
         update_item(db, gameid, userid, 'approaches', 'flashy', '0', False)
@@ -200,10 +202,10 @@ def add_default_items(db, userid, gameid, template):
         update_item(db, gameid, userid, 'approaches', 'quick', '0', False)
         update_item(db, gameid, userid, 'approaches', 'sneaky', '0', False)
     elif template == 'dnd':
-        update_item(db, gameid, userid, 'gen', 'class', 'Your class.', False)
-        update_item(db, gameid, userid, 'gen', 'race', 'Your race.', False)
-        update_item(db, gameid, userid, 'gen', 'alignment', 'Your alignment.', False)
-        update_item(db, gameid, userid, 'gen', 'level', '1', False)
+        update_item(db, gameid, userid, 'general', 'class', 'Your class.', False)
+        update_item(db, gameid, userid, 'general', 'race', 'Your race.', False)
+        update_item(db, gameid, userid, 'general', 'alignment', 'Your alignment.', False)
+        update_item(db, gameid, userid, 'general', 'level', '1', False)
         update_item(db, gameid, userid, 'attributes', 'strength', '14', False)
         update_item(db, gameid, userid, 'attributes', 'dexterity', '14', False)
         update_item(db, gameid, userid, 'attributes', 'constitution', '14', False)
