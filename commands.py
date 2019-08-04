@@ -554,4 +554,10 @@ def more(handler):
     #options['Leave game'] = 'leave'
     options['Delete game'] = 'delgame'
     options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
+    options['Cancel'] = 'cancel'
     handler.send('How can I help you?', options=options, allowedit=True)
+
+@add_command('cancel')
+def cancel(handler):
+    handler.delete()
+

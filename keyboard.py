@@ -116,6 +116,7 @@ class MessageHandler(telepot.helper.ChatHandler):
         if target is None:
             if self.message is not None:
                 self.bot.deleteMessage(self.message)
+                self.message = None
             sent = self.bot.sendMessage(self.chat_id, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
             if allowedit:
                 self.message = telepot.message_identifier(sent)
@@ -123,6 +124,10 @@ class MessageHandler(telepot.helper.ChatHandler):
                 self.message = None
         else:
             self.bot.sendMessage(target, msg, disable_web_page_preview=disablepreview, reply_markup=keyboard)
+
+    def delete(self):
+        self.bot.deleteMessage(self.message)
+        self.message = None
 
     def on_callback_query(self, msg):
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
