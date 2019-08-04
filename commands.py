@@ -539,7 +539,10 @@ How can I help you?"""
 
         options['Roll dices (shortcut: /roll <dice>)'] = 'roll'
         options['Roll dices secretly (shortcut: /gmroll)'] = 'gmroll'
-        options['More ...'] = 'more'
+        subopts = OrderedDict()
+        subopts['More ...'] = 'more'
+        subopts['Cancel'] = 'cancel'
+        options['dummy3'] = subopts
         handler.send('How can I help you?', options=options, allowedit=True)
         
 
@@ -554,7 +557,10 @@ def more(handler):
     #options['Leave game'] = 'leave'
     options['Delete game'] = 'delgame'
     options['Go to official site ->'] = {'url': 'https://github.com/simonebaracchi/rpgbot'}
-    options['Cancel'] = 'cancel'
+    subopts = OrderedDict()
+    subopts['<- Back'] = 'start'
+    subopts['Cancel'] = 'cancel'
+    options['dummy'] = subopts
     handler.send('How can I help you?', options=options, allowedit=True)
 
 @add_command('cancel')
