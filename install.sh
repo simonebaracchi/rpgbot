@@ -34,7 +34,7 @@ Y|y)
 	sed -i s"#MY-PATH#$DIR#" /tmp/rpgbot.service
 	mv /tmp/rpgbot.service /etc/systemd/system/multi-user.target.wants/rpgbot.service
 	systemctl daemon-reload
-	systemctl restart tsh
+	systemctl restart rpgbot
 	;;
 *)
 	echo Unrecognized option $DAEMON, exiting
