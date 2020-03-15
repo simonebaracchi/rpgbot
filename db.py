@@ -7,7 +7,9 @@ db_version = 1
 ROLE_PLAYER = 10
 ROLE_MASTER = 20
 game_templates = OrderedDict([('fae', 'Fate Accelerated RPG'),
-                              ('dnd', 'Dungeons & Dragons')])
+                              ('fae-blank', 'Fate Accelerated RPG (empty character sheet)'),
+                              ('dnd', 'Dungeons & Dragons'),
+                              ('dnd-blank', 'Dungeons & Dragons (empty character sheet)')])
 room_container = 'room'
 rolls_container = 'rolls'
 
@@ -61,6 +63,17 @@ def init():
     db.commit()
     close_connection(db)
 
+def convert_template(template):
+    """
+    The blank versions of the character sheets use the same templates (same dices)
+    but treat treat the sheet creation differently (...by skipping it)
+    """
+    if template == 'fae-blank':
+        return 'fae', True
+    if template == 'dnd-blank':
+        return 'dnd', True
+    return template, False
+
 def new_game(db, admin, playername, gamename, groupid, groupname, template):
     """
     Creates a new game.
@@ -71,6 +84,7 @@ def new_game(db, admin, playername, gamename, groupid, groupname, template):
     """
     if template not in game_templates:
         raise
+
     c = db.cursor()
     try:
         query = c.execute('''INSERT INTO Games(version, lastactivity, gamename, template) VALUES (?, datetime('now'), ?, ?)''', (db_version, gamename, template))

@@ -71,6 +71,10 @@ def choose_container(string, argname, allownew, adding):
                 kwargs['containercallback'] = func
                 kwargs['argname'] = argname
                 handler.read_answer(new_container_callback, 'newcontainer', kwargs)
+            elif len(options) == 0:
+                # no options to show
+                handler.send('You don\'t seem to have anything with you.')
+                return False
             else:
                 handler.send(string, options=options, allowedit=True)
                 handler.read_answer(func, argname, kwargs)
@@ -193,12 +197,14 @@ def need_role(role, errormessage):
 @read_args('How are we going to call the game?', 'name')
 @choose_template('Please choose a game template. This will only affect the default character sheets and dices.', 'template')
 def newgame(handler, name, template):
+    template, skip_sheet = db.convert_template(template)
     gameid = db.new_game(handler.dbc, handler.sender_id, handler.username, name, handler.chat_id, handler.groupname, template)
     if gameid is None:
         handler.send(newgame_already_started_usage())
         return False
 
-    db.add_default_items(handler.dbc, handler.sender_id, gameid, template)
+    if not skip_sheet:
+        db.add_default_items(handler.dbc, handler.sender_id, gameid, template)
     handler.send('New game created: {}.'.format(name))
 
 
