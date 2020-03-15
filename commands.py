@@ -215,6 +215,7 @@ def newgame(handler, name, template):
 def delgame(handler):
     db.del_game(handler.dbc, handler.group.gameid)
     handler.send('GG, humans.')
+    handler.group = None
 
 @add_command('showgame')
 @need_gameid(allowexisting=True, errormessage='No game found.')
