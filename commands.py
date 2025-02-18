@@ -451,6 +451,9 @@ def roll(handler):
         handler.send('Invalid dice format.')
         return
 
+    if dice == '1d20':
+        outcome = dice
+
     if command == 'roll' or command == 'r':
         handler.send('Rolled {} = {}.'.format(outcome, value))
     elif command == 'gmroll':
