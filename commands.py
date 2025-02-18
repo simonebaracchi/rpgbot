@@ -483,7 +483,7 @@ def start(handler):
     if handler.is_group is False and handler.group is None:
         # I am in a private chat, suggest to add me to a group
         message = """Howdy, human.
-I am a character sheet bot for Fate RPG.
+I am a character sheet bot for FateRPG and D&D-style games.
 To use my services, add me to a group, invite other players, and call me again to start a new game.
 Use the inline keyboard to navigate my character sheet functions, or use the shortcut `/roll` to roll dices.
 Visit the official site for more details.
@@ -504,7 +504,7 @@ Hope you have fun!"""
         else:
             # suggest to start a new game
             message = """Howdy, earthlings.
-I am a character sheet bot for Fate RPG.
+I am a character sheet bot for FateRPG and D&D-style games.
 How can I help you?"""
             options = OrderedDict()
             options['Start new game'] = 'newgame'
