@@ -27,6 +27,7 @@ class MessageHandler(telepot.helper.ChatHandler):
         self.player = None # not automatically initialized
         self.group = None # not automatically initialized
         self.callback = None # string to be read requested
+        self.bot_username = self.bot.getMe()['username']
 
     def on_chat_message(self, msg):
         """
@@ -69,6 +70,10 @@ class MessageHandler(telepot.helper.ChatHandler):
         if '@' in command:
             more_split = command.split('@', maxsplit=1)
             command = more_split[0]
+            invoked_username = more_split[1]
+            if invoked_username != self.bot_username:
+                # message was not for me
+                return
         # skip '/'
         self.command = command[1:]
 
